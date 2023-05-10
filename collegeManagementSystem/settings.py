@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",   
     "studentManagementApp",
+    'django.contrib.sites',
     "rest_framework"
 ]
 
@@ -49,7 +50,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-]
+    'django.contrib.sites.middleware.CurrentSiteMiddleware',
+    
+    # "studentManagementApp.middleware.LoginRequiredMiddleware",
+    # "studentManagementApp.middleware.TeacherRequiredMiddleware",
+    
+    
+]   
 
 ROOT_URLCONF = "collegeManagementSystem.urls"
 
@@ -71,6 +78,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "collegeManagementSystem.wsgi.application"
 
+SITE_ID = 1
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -133,6 +141,15 @@ AUTH_USER_MODEL = "studentManagementApp.User"
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-SESSION_COOKIE_AGE = 3600
+SESSION_COOKIE_AGE = 1800
 
-LOGIN_URL = 'login'
+LOGIN_URL = '/login/'
+
+# LOGIN_EXEMPT_URLS = ('/login/', '/register/' ,'/admin')
+
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#     'rest_framework_simplejwt.authentication.JWTAuthentication', 
+# ),
+# }

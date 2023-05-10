@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.urls import path
-from .views import *
+from studentManagementApp.views import * 
 
 urlpatterns = [
     path('', LoginView.as_view(), name='login'),
+    # path('tokenlogin/', TokenLogin.as_view(), name='tokenlogin'),
     path('login/', LoginView.as_view(), name='login'),
     path('register/',StaffHodRegisterView.as_view(),name="createstudent"),
     path('course/', CourseView.as_view(), name='newcourse'),
@@ -21,7 +22,8 @@ urlpatterns = [
     path('studentleave/', StudentLeaveView.as_view(), name='staffleave'),
     path('studentleave/<int:pk>', StudentLeaveView.as_view(), name='editstaffleave'),
     path('teachers/', TeachersDashBoard, name='teachers'),
-    path('applyleave/', ApplyLeave, name='applyleave'),
+    path('takeattendancestudent/', takeattendance, name='takeattendancestudent'),
     path('subattendance/', Subattendance.as_view(), name='subattendance'),
     path('takeattendance/', TakeAttendance.as_view(), name='takeattendance'),
+    path('studentnotification/', StudentNotifications.as_view(), name='studentnotification'),
 ]   

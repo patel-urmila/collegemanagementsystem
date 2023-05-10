@@ -1,4 +1,4 @@
-from django.shortcuts import render,HttpResponse,redirect
+from django.shortcuts import render,HttpResponse
 from rest_framework.generics import *
 from django.views.generic.base import *
 from rest_framework.response import Response
@@ -10,23 +10,25 @@ from collegeManagementSystem import settings
 from django.contrib.auth.decorators import login_required
 from rest_framework.permissions import IsAuthenticated
 from django.utils.decorators import method_decorator
-from django.http import JsonResponse
 from datetime import datetime, timezone
-# Create your views here.
+from rest_framework_simplejwt.tokens import RefreshToken
+import jwt
+from django.views.decorators.csrf import csrf_exempt
 
 def home(request):
     return HttpResponse("helloo")
-@login_required
+
 def TeachersDashBoard(request):
     return render(request,"teacherDashBoard.html")
 
-@login_required
-def ApplyLeave(request):
-    user = User.objects.get(email=request.user)
-    teacher = Teachers.objects.get(user = user)
-    sub = Subjects.objects.filter(teacher=teacher)
-    session = SessionYear.objects.all()
-    return render(request,"takeattendance.html",{'sub':sub,'session':session})
+
+def takeattendance(request):
+    if request.user.role == "Teacher":
+        user = User.objects.get(email=request.user)
+        teacher = Teachers.objects.get(user = user)
+        sub = Subjects.objects.filter(teacher=teacher)
+        session = SessionYear.objects.all()
+        return render(request,"takeattendance.html",{'sub':sub,'session':session})
 
 class Subattendance(APIView):   
     def post(self,request):
@@ -74,10 +76,36 @@ class TakeAttendance(APIView):
 class StaffHodRegisterView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    } 
+
+def decode_token(token):
+    decode_token = jwt.decode(token,None,None)
+    return decode_token
+
+# class TokenLogin(APIView):
+#     def post(self,request,format = None):
+#         email = request.data.get('email') 
+#         password = request.data.get('password')
+#         # user = User.objects.get(email=email)
+#         user = authenticate(request, email=email, password=password)
+#         if user:
+#             auth_token = get_tokens_for_user(user)
+#             print("-----------------auth data",auth_token)
+#             response = Response({"success":True ,'refreshtoken': str(auth_token['refresh']), 'accesstoken': str(auth_token['access'])})
+#             response.set_cookie("user",user, max_age = 60)
+#             return response
+#         return Response({"msg":"Invalid Login credentials"})
+       
 class LoginView(TemplateView):
     template_name = 'login.html'
-    def post(self, request):
+    def post(self, request, format=None):
         email = request.POST['email']
         password = request.POST['password'] 
         user = authenticate(request, email=email, password=password)
@@ -96,114 +124,231 @@ class LoginView(TemplateView):
         else:
             return render(request,'login.html',{'alert': 'Invalid login credentials'})
     
-@method_decorator(login_required, name='dispatch')
+
 class CourseView(APIView):
-    permission_classes = [IsAuthenticated]
     def get(self,request,pk = None ,format = None):
-        id = pk
-        if id is not None:
-            stu = Courses.objects.get(id=id)
-            serializer = NewCourseSerializer(stu)
-            return Response(serializer.data)
-        stu = Courses.objects.all()
-        serializer = NewCourseSerializer(stu,many = True)
-        return Response(serializer.data)
+        try:
+            id = pk
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            cookie = request.COOKIES['user']
+            print("-----cookie",cookie) 
+            if hod is True:
+                if id is not None:
+                    stu = Courses.objects.get(id=id)
+                    serializer = NewCourseSerializer(stu)
+                    return Response(serializer.data)
+                stu = Courses.objects.all()
+                serializer = NewCourseSerializer(stu,many = True)
+                return Response(serializer.data)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def post(self,request,format = None):
-        serializer = NewCourseSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg' : 'Data Created'})
-        return Response(serializer.errors)
+        try:
+            request.session.set_expiry(settings.SESSION_COOKIE_AGE)
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                serializer = NewCourseSerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'msg' : 'Data Created'})
+                return Response(serializer.errors)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def put(self,request,pk = None,format = None):
-        subject = Courses.objects.get(pk=pk)   
-        serializer = NewCourseSerializer(subject, data=request.data, partial = True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg' : serializer.data})
-        return Response(serializer.errors)
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                subject = Courses.objects.get(pk=pk)   
+                serializer = NewCourseSerializer(subject, data=request.data, partial = True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'msg' : serializer.data})
+                return Response(serializer.errors)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def delete(self,request,pk = None ,format = None):
-        sub = Courses.objects.get(pk=pk)
-        sub.delete()
-        return Response({'msg': 'DATA Deleted'})
- 
-@method_decorator(login_required, name='dispatch')
-class SessionYearView(APIView):
-    permission_classes = [IsAuthenticated]   
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                sub = Courses.objects.get(pk=pk)
+                sub.delete()
+                return Response({'msg': 'DATA Deleted'})
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
+
+class SessionYearView(APIView): 
     queryset = SessionYear.objects.all()
     serializer_class = SessionSerializer
     
     def get(self,request,pk = None ,format = None):
-        id = pk
-        if id is not None:
-            stu = SessionYear.objects.get(id=id)
-            serializer = SessionSerializer(stu)
-            return Response(serializer.data)
-        stu = SessionYear.objects.all()
-        serializer = SessionSerializer(stu,many = True)
-        return Response(serializer.data)
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                id = pk
+                if id is not None:
+                    stu = SessionYear.objects.get(id=id)
+                    serializer = SessionSerializer(stu)
+                    return Response(serializer.data)
+                stu = SessionYear.objects.all()
+                serializer = SessionSerializer(stu,many = True)
+                return Response(serializer.data)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def post(self,request,format = None):
-        serializer = SessionSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg' : serializer.data})
-        return Response(serializer.errors)
-    
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                serializer = SessionSerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'msg' : serializer.data})
+                return Response(serializer.errors)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
+            
     def put(self,request,pk = None,format = None):
-        subject = SessionYear.objects.get(pk=pk)   
-        serializer = SessionSerializer(subject, data=request.data, partial = True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg' : serializer.data})
-        return Response(serializer.errors)
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                subject = SessionYear.objects.get(pk=pk)   
+                serializer = SessionSerializer(subject, data=request.data, partial = True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'msg' : serializer.data})
+                return Response(serializer.errors)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def delete(self,request,pk = None ,format = None):
-        sub = SessionYear.objects.get(pk=pk)
-        sub.delete()
-        return Response({'msg': 'DATA Deleted'})
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                sub = SessionYear.objects.get(pk=pk)
+                sub.delete()
+                return Response({'msg': 'DATA Deleted'})
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
 
-@method_decorator(login_required, name='dispatch')
-class SubjectView(APIView):
-    permission_classes = [IsAuthenticated]      
+
+class SubjectView(APIView):  
     queryset = Subjects.objects.all()
     serializer_class = AddSubjectSerializer
     
     def get(self,request,pk = None ,format = None):
-        id = pk
-        if id is not None:
-            stu = Subjects.objects.get(id=id)
-            serializer = AddSubjectSerializer(stu)
-            return Response(serializer.data)
-        stu = Subjects.objects.all()
-        serializer = AddSubjectSerializer(stu,many = True)
-        return Response(serializer.data)
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                id = pk
+                if id is not None:
+                    stu = Subjects.objects.get(id=id)
+                    serializer = AddSubjectSerializer(stu)
+                    return Response(serializer.data)
+                stu = Subjects.objects.all()
+                serializer = AddSubjectSerializer(stu,many = True)
+                return Response(serializer.data)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def post(self,request,format = None):
-        serializer = AddSubjectSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg' : serializer.data})
-        return Response(serializer.errors)
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                serializer = AddSubjectSerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'msg' : serializer.data})
+                return Response(serializer.errors)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def put(self,request,pk = None,format = None):
-        subject = Subjects.objects.get(pk=pk)   
-        serializer = AddSubjectSerializer(subject, data=request.data, partial = True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg' : serializer.data})
-        return Response(serializer.errors)
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                subject = Subjects.objects.get(pk=pk)   
+                serializer = AddSubjectSerializer(subject, data=request.data, partial = True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'msg' : serializer.data})
+                return Response(serializer.errors)
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
     
     def delete(self,request,pk = None ,format = None):
-        sub = Subjects.objects.get(pk=pk)
-        sub.delete()
-        return Response({'msg': 'DATA Deleted'})
+        try:
+            token = request.data['token']
+            d_token = decode_token(token)
+            user_id = d_token['user_id']
+            hod = User.objects.get(id=user_id).role == "HOD"
+            if hod is True:
+                sub = Subjects.objects.get(pk=pk)
+                sub.delete()
+                return Response({'msg': 'DATA Deleted'})
+            else:
+                return Response({"msg":"permission denied"})
+        except Exception as e:
+                return Response(str(e)) 
 
-@method_decorator(login_required, name='dispatch')
-class TeachersView(APIView):
-    permission_classes = [IsAuthenticated]  
+class TeachersView(APIView):  
     queryset = Teachers.objects.all()
     serializer_class = TeacherSerializer
     
@@ -267,9 +412,7 @@ class TeachersView(APIView):
             return Response({'msg': 'DATA Deleted'})
         return Response({'msg': 'Permission Denied'})
 
-@method_decorator(login_required, name='dispatch')
-class StudentView(APIView):
-    permission_classes = [IsAuthenticated]        
+class StudentView(APIView):      
     queryset = Students.objects.all()
     serializer_class = StudentSerializer
     
@@ -325,9 +468,9 @@ class StudentView(APIView):
     
     def delete(self,request,pk = None ,format = None):
         user = User.objects.get(email = request.user)
-        if User.objects.get(email = request.user).role == "HOD" or Students.objects.filter(user=user).filter(pk=pk).exists():
-            sub = Students.objects.get(pk=pk)
-            sub.delete()
+        if User.objects.get(email = request.user).role == "HOD" :
+            student = Students.objects.get(id=pk)
+            student.delete()
             return Response({'msg': 'DATA Deleted'})
         return Response({'msg': 'Permission Denied'})
     
@@ -513,7 +656,8 @@ class StudentLeaveView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({'msg' : serializer.data})
-        return Response(serializer.errors)
+        else:
+            return Response(serializer.errors)
     
     def delete(self,request,pk = None ,format = None):
         student = Students.objects.get(user = request.user)
@@ -521,4 +665,26 @@ class StudentLeaveView(APIView):
         if leave.exists():
             leave.delete()
             return Response({'msg': 'DATA Deleted'})
-        return Response({'msg': 'Permission Denied'})
+        else:
+            return Response({'msg': 'Permission Denied'})
+        
+        
+class StudentNotifications(APIView):
+    def get(self,request):
+        if request.user.role == "Student":
+            student  = Students.objects.get(user = request.user)
+            attendance = Attendance.objects.filter(student=student)
+            data = []
+            if attendance is not None:
+                for i in attendance:
+                    notification = AttendanceNotification.objects.get(attendance=i)
+                    date = str(notification.attendance.created_at)
+                    notification_date = date.split()
+                    data.append({
+                        'date': notification_date[0],
+                        'attendance': notification.attendance.status,
+                        'subject':notification.attendance.subject.subName
+                    })
+            return Response(data)
+        else:
+            return Response({'msg': 'Permission Denied'})

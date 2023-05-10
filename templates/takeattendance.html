@@ -1,7 +1,8 @@
 {% extends "teacherDashBoard.html" %}
+{% load admin_list %}
 {% load static %}
 {% block content %}
-<h3 class="m-2 p-3">Take Attendance</h3>
+<h3 class="m-2 p-3">Take Attendance {{ request.admin_list.admin }}</h3>
 <div class="jumbotron jumbotron-fluid text-bg-primary m-3 p-3">
     <form>
     <h3>Subject</h3>
