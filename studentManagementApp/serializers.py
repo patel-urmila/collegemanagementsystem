@@ -43,25 +43,27 @@ class SessionSerializer(serializers.Serializer):
     
     class Meta:
         model = SessionYear
-        fields = ['startYear','endYear']
+        # fields = ['startYear','endYear']
+        fields = '__all__'
 
 class NewCourseSerializer(serializers.ModelSerializer):
+    sessionYear = SessionSerializer()
     class Meta:
         model = Courses
-        fields = ['courseName','sessionYear']
-        
-        
-class AddSubjectSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subjects
-        fields = ['subName','course','teacher']
-        
-        
+        fields = '__all__'
+
 class TeacherSerializer(serializers.ModelSerializer):    
     class Meta:
         model = User
-        fields = ['first_name','last_name','email']
+        fields = ['first_name','last_name','email']     
         
+class AddSubjectSerializer(serializers.ModelSerializer):
+    course = NewCourseSerializer()
+    # teacher = TeacherSerializer()
+    class Meta:
+        model = Subjects
+        fields = '__all__'
+        # fields = ['subName','course','teacher']       
 
 class StudentUserSerializer(serializers.ModelSerializer):
     class Meta:

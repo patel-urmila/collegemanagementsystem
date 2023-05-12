@@ -26,4 +26,13 @@ urlpatterns = [
     path('subattendance/', Subattendance.as_view(), name='subattendance'),
     path('takeattendance/', TakeAttendance.as_view(), name='takeattendance'),
     path('studentnotification/', StudentNotifications.as_view(), name='studentnotification'),
+    
+    
+    
+    path('manageteacher/', TeacherListView.as_view(), name='manageteacher'),
+    path('managestudent/', StudentListView.as_view(), name='managestudent'),
+    path('managecourse/', CourseListView.as_view(), name='managecourse'),
+    path('managesubject/', SubjectListView.as_view(), name='managesubject'),
+    path('managesession/', SessionListView.as_view(), name='managesession'),
+    path('staffleaverequests/', StaffLeaveListView.as_view(), name='staffleaverequests'),
 ]   

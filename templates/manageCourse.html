@@ -1,0 +1,27 @@
+{% extends "HodDashBoard.html" %}
+{% block content %}
+<h1>Manage Course</h1>
+<button type="button" class="btn btn-primary">Add New Course</button>
+<table class="table">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">course Id</th>
+        <th scope="col">Course Name</th>
+        <th scope="col">session Year</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for i in course %}
+            <tr>
+                <th scope="row">{{i.id}}</th>
+                <td>{{i.courseName}}</td>
+                <td>{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}} </td>
+                <td><button type="button" class="btn btn-warning">Edit</button></td>
+                <td><button type="button" class="btn btn-danger">Delete</button></td>  
+            </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+{% endblock content %}

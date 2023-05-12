@@ -1,0 +1,29 @@
+{% extends "HodDashBoard.html" %}
+{% block content %}
+<h1>Staff Leave Requests</h1>
+{% comment %} <button type="button" class="btn btn-primary">Add New Session</button> {% endcomment %}
+<table class="table">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Leave ID</th>
+        <th scope="col">Name</th>
+        <th scope="col">Reason</th>
+        <th scope="col">Leave Date</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for i in leaves %}
+            <tr>
+                <th scope="row">{{i.id}}</th>
+                <td>{{i.first_name}}</td>
+                <td>{{i.leave_msg}}</td>
+                <td>{{i.leave_date}}</td>
+                <td><button type="button" class="btn btn-warning">Accept</button></td>
+                <td><button type="button" class="btn btn-danger">Reject</button></td> 
+            </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+{% endblock content %}

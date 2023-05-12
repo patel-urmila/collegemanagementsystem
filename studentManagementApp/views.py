@@ -129,12 +129,13 @@ class CourseView(APIView):
     def get(self,request,pk = None ,format = None):
         try:
             id = pk
-            token = request.data['token']
-            d_token = decode_token(token)
-            user_id = d_token['user_id']
-            hod = User.objects.get(id=user_id).role == "HOD"
-            cookie = request.COOKIES['user']
-            print("-----cookie",cookie) 
+            # token = request.data['token']
+            # d_token = decode_token(token)
+            # user_id = d_token['user_id']
+            # hod = User.objects.get(id=user_id).role == "HOD"
+            hod = User.objects.get(email=request.user).role == "HOD"
+            # cookie = request.COOKIES['user']
+            # print("-----cookie",cookie) 
             if hod is True:
                 if id is not None:
                     stu = Courses.objects.get(id=id)
@@ -142,6 +143,7 @@ class CourseView(APIView):
                     return Response(serializer.data)
                 stu = Courses.objects.all()
                 serializer = NewCourseSerializer(stu,many = True)
+                # print("-------data",serializer.data)
                 return Response(serializer.data)
             else:
                 return Response({"msg":"permission denied"})
@@ -205,10 +207,11 @@ class SessionYearView(APIView):
     
     def get(self,request,pk = None ,format = None):
         try:
-            token = request.data['token']
-            d_token = decode_token(token)
-            user_id = d_token['user_id']
-            hod = User.objects.get(id=user_id).role == "HOD"
+            # token = request.data['token']
+            # d_token = decode_token(token)
+            # user_id = d_token['user_id']
+            # hod = User.objects.get(id=user_id).role == "HOD"
+            hod = User.objects.get(email=request.user).role == "HOD"
             if hod is True:
                 id = pk
                 if id is not None:
@@ -216,8 +219,16 @@ class SessionYearView(APIView):
                     serializer = SessionSerializer(stu)
                     return Response(serializer.data)
                 stu = SessionYear.objects.all()
-                serializer = SessionSerializer(stu,many = True)
-                return Response(serializer.data)
+                data = []
+                for i in stu:
+                    data.append({
+                                "id":i.id,
+                                'startYear': i.startYear,
+                                'endYear': i.endYear,  
+                            })
+                    # print("....",i.id,i)
+                # serializer = SessionSerializer(stu,many = True)
+                return Response(data)
             else:
                 return Response({"msg":"permission denied"})
         except Exception as e:
@@ -280,10 +291,11 @@ class SubjectView(APIView):
     
     def get(self,request,pk = None ,format = None):
         try:
-            token = request.data['token']
-            d_token = decode_token(token)
-            user_id = d_token['user_id']
-            hod = User.objects.get(id=user_id).role == "HOD"
+            # token = request.data['token']
+            # d_token = decode_token(token)
+            # user_id = d_token['user_id']
+            # hod = User.objects.get(id=user_id).role == "HOD"
+            hod = User.objects.get(email=request.user).role == "HOD"
             if hod is True:
                 id = pk
                 if id is not None:
@@ -347,10 +359,12 @@ class SubjectView(APIView):
                 return Response({"msg":"permission denied"})
         except Exception as e:
                 return Response(str(e)) 
+from django.http import HttpRequest
 
 class TeachersView(APIView):  
     queryset = Teachers.objects.all()
     serializer_class = TeacherSerializer
+    print("--- ----here")
     
     def get(self,request,pk = None ,format = None):
         id = pk
@@ -378,6 +392,7 @@ class TeachersView(APIView):
         return Response(teacher_info)
     
     def post(self,request,format = None):
+        print("post ----here")
         if User.objects.get(email = request.user).role == "HOD":
             password = request.data['password']
             serializer = TeacherSerializer(data=request.data)
@@ -392,7 +407,8 @@ class TeachersView(APIView):
         return Response({'msg': 'Permission Denied'})
         
     
-    def patch(self,request,pk = None,format = None):
+    # def patch(self,request,pk = None,format = None):
+    def patch(self,request,pk= None, *args, **kwargs):
         user = User.objects.get(email = request.user)
         if User.objects.get(email = request.user).role == "HOD" or Teachers.objects.filter(user=user).filter(pk=pk).exists():
             teacher = Teachers.objects.get(pk=pk)   
@@ -405,9 +421,11 @@ class TeachersView(APIView):
         return Response({'msg': 'Permission Denied'})
     
     def delete(self,request,pk = None ,format = None):
+        print("re------",request)
         user = User.objects.get(email = request.user)
         if User.objects.get(email = request.user).role == "HOD" or Teachers.objects.filter(user=user).filter(pk=pk).exists():
             sub = Teachers.objects.get(pk=pk)
+            print("----------sub",sub)
             sub.delete()
             return Response({'msg': 'DATA Deleted'})
         return Response({'msg': 'Permission Denied'})
@@ -476,7 +494,7 @@ class StudentView(APIView):
     
 @method_decorator(login_required, name='dispatch')
 class StaffLeaveView(APIView):
-    permission_classes = [IsAuthenticated]   
+    # permission_classes = [IsAuthenticated]   
     queryset = StaffLeave.objects.all()
     serializer_class = StaffLeaveSerializer
     
@@ -518,9 +536,9 @@ class StaffLeaveView(APIView):
             for i in teachers:
                 teacher_info.append({
                     'id': i.id,
-                    'email': i.user.user.first_name,
+                    'first_name': i.teacher.user.first_name,
                     'leave_date': i.leaveDate,
-                    'leave msg': i.reason,
+                    'leave_msg': i.reason,
                     'applied on': i.created_at,
                     'status': i.status
                 })
@@ -688,3 +706,57 @@ class StudentNotifications(APIView):
             return Response(data)
         else:
             return Response({'msg': 'Permission Denied'})
+        
+class TeacherListView(TemplateView):
+    template_name = 'manageTeacher.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        response = TeachersView.as_view()(self.request)
+        context['teacher'] = response.data
+        return context
+
+class StudentListView(TemplateView):
+    template_name = 'managestudent.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        response = StudentView.as_view()(self.request)
+        context['student'] = response.data
+        return context
+    
+class CourseListView(TemplateView):
+    template_name = 'manageCourse.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        response = CourseView.as_view()(self.request)
+        context['course'] = response.data
+        return context
+    
+class SubjectListView(TemplateView):
+    template_name = 'manageSubject.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        response = SubjectView.as_view()(self.request)
+        context['subject'] = response.data
+        return context
+    
+class SessionListView(TemplateView):
+    template_name = 'manageSession.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        response = SessionYearView.as_view()(self.request)
+        context['session'] = response.data
+        return context
+    
+class StaffLeaveListView(TemplateView):
+    template_name = 'manageStaffLeaves.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        response = StaffLeaveView.as_view()(self.request)
+        context['leaves'] = response.data
+        return context

@@ -1,0 +1,27 @@
+{% extends "HodDashBoard.html" %}
+{% block content %}
+<h1>Manage Session</h1>
+<button type="button" class="btn btn-primary">Add New Session</button>
+<table class="table">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Session ID</th>
+        <th scope="col">Session Start Date</th>
+        <th scope="col">Session End Date</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for i in session %}
+            <tr>
+                <th scope="row">{{i.id}}</th>
+                <td>{{i.startYear}}</td>
+                <td>{{i.endYear}}</td>
+                <td><button type="button" class="btn btn-warning">Edit</button></td>
+                <td><button type="button" class="btn btn-danger">Delete</button></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+{% endblock content %}

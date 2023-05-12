@@ -1,0 +1,29 @@
+{% extends "HodDashBoard.html" %}
+{% block content %}
+<h1>Manage Subject</h1>
+<button type="button" class="btn btn-primary">Add Subject</button>
+{% comment %} <div class="container"> {% endcomment %}
+    <table class="table">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col">Subject ID</th>
+            <th scope="col">Subject Name</th>
+            {% comment %} <th scope="col">Teacher Name</th> {% endcomment %}
+            <th></th>
+            <th></th>
+          </tr> 
+        </thead>
+        <tbody>
+            {% for i in subject %}
+                <tr>
+                    <th scope="row">{{i.id}}</th>
+                    <td>{{i.subName}}</td>
+                    {% comment %} <td>{{i.teacher}}</td> {% endcomment %}
+                    <td><button type="button" class="btn btn-warning">Edit</button></td>
+                    <td><button type="button" class="btn btn-danger">Delete</button></td>  
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% comment %} </div> {% endcomment %}
+{% endblock content %}
