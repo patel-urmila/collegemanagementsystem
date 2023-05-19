@@ -1,5 +1,6 @@
 {% extends "HodDashBoard.html" %}
 {% block content %}
+{% if flag == 1 %}
 <h1>Manage Staff</h1>
 <button  data-book-id="{{i.id}}"class="add-button btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="span_name">Add Staff</button>
 <table class="table">
@@ -38,7 +39,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title fw-bold text-start" id="exampleModalLabel">Book Details</h4>
+          <h4 class="modal-title fw-bold text-start" id="exampleModalLabel">Add Staff Details</h4>
         </div>
         <div class="modal-body">
           <form>
@@ -67,6 +68,11 @@
       </div>
     </div>
   </div>
+{% elif flag == 2%}
+<script>
+  window.location.href = "{% url 'login'%}";
+</script>
+{% endif %}
 {% endblock content %}
 {% block js%}
 <script>
@@ -154,3 +160,4 @@
     }
 </script>
 {% endblock js%}
+

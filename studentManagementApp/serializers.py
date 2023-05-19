@@ -37,20 +37,43 @@ class LoginSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
     
-class SessionSerializer(serializers.Serializer):
+class SessionSerializer(serializers.ModelSerializer):
     startYear = serializers.DateField(format="%Y-%m-%d")
     endYear = serializers.DateField(format="%Y-%m-%d")
     
     class Meta:
         model = SessionYear
-        # fields = ['startYear','endYear']
-        fields = '__all__'
+        fields = ['id','startYear','endYear']
+        # fields = '__all__'
+    
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+            model = Courses
+            fields = ['id','courseName','sessionYear']
 
 class NewCourseSerializer(serializers.ModelSerializer):
     sessionYear = SessionSerializer()
     class Meta:
         model = Courses
-        fields = '__all__'
+        fields = ['id','courseName','sessionYear']
+    
+    # courses = Courses.objects.all()
+    # serializer = NewCourseSerializer(courses, many=True)
+    # data = serializer.data
+    
+    def update(self, instance, validated_data):
+        session_year_data = validated_data.pop('sessionYear', None)
+        # session_year_serializer = SessionSerializer(data=session_year_data)
+        print(session_year_data,"------------------------")
+        # id = session_year_serializer.instance.id  
+        if session_year_data is not None:
+            session_year_serializer = SessionSerializer(instance.sessionYear.id, data=session_year_data)
+        session = SessionYear.objects.get(pk=id)
+        instance.courseName = validated_data.get('courseName', instance.courseName)
+        instance.sessionYear = session
+        instance.save()
+
+        return instance
 
 class TeacherSerializer(serializers.ModelSerializer):    
     class Meta:
@@ -58,7 +81,7 @@ class TeacherSerializer(serializers.ModelSerializer):
         fields = ['first_name','last_name','email']     
         
 class AddSubjectSerializer(serializers.ModelSerializer):
-    course = NewCourseSerializer()
+    # course = NewCourseSerializer()
     # teacher = TeacherSerializer()
     class Meta:
         model = Subjects
@@ -86,6 +109,7 @@ class StudentSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         user_data = validated_data.pop('user')
+        print("-----------user_data",user_data)
         user = StudentUserSerializer.create(StudentUserSerializer(), validated_data=user_data)
         student = Students.objects.create(user=user, **validated_data)
         return student
@@ -94,9 +118,25 @@ class StudentSerializer(serializers.ModelSerializer):
 class StaffLeaveSerializer(serializers.ModelSerializer):
     class Meta:
         model = StaffLeave
-        exclude = ['user','status']
+        # exclude = ['status']
+        fields = "__all__"
         
 class StudentLeaveSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentLeave
-        exclude = ['user','status']
+        # exclude = ['user','status']
+        fields = ['leaveDate','reason']
+
+import jwt
+
+def decode_token(token):
+    decode_token = jwt.decode(token,None,None)
+    return decode_token
+  
+        
+class MyAttendanceSerializer(serializers.Serializer):
+    subjects = serializers.ChoiceField(choices=Subjects.objects.all())
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+
+  

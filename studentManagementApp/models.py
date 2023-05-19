@@ -19,9 +19,10 @@ class SessionYear(models.Model):
     endYear = models.DateField()
     
     def __str__(self):
-        return f"{self.startYear} To {self.endYear}"
+        return f"{self.startYear}"
+        # return f"{self.startYear} To {self.endYear}"
     
-    ordering = ['year']
+    # ordering = ['year']
     
 class Courses(models.Model):
     courseName = models.CharField(max_length=254)

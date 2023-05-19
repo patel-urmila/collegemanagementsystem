@@ -17,13 +17,64 @@
         {% for i in leaves %}
             <tr>
                 <th scope="row">{{i.id}}</th>
-                <td>{{i.first_name}}</td>
+                <td>{{i.Teacher}}</td>
                 <td>{{i.leave_msg}}</td>
                 <td>{{i.leave_date}}</td>
-                <td><button type="button" class="btn btn-warning">Accept</button></td>
-                <td><button type="button" class="btn btn-danger">Reject</button></td> 
+                <td><button type="button" class="btn btn-primary" onclick='AcceptRequest({{i.id}})'>Accept</button></td>
+                <td><button type="button" class="btn btn-danger" onclick='RejectRequest({{i.id}})'>Reject</button></td> 
             </tr>
         {% endfor %}
     </tbody>
   </table>
 {% endblock content %}
+{% block js%}
+<script>
+console.log("hello hii")
+function AcceptRequest(e){
+  $.ajax({
+    method:'patch',
+    url: "/staffleave/"+e,
+    headers: {
+        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+    },
+    data:{
+      'pk':e,
+      "status": "Approve"
+    },
+    success: function(){
+      console.log("------------success")
+      document.location = "/staffleaverequests/"
+    },
+    error: function () {
+      console.log("error------")
+      document.location = "/staffleaverequests/"
+    }
+
+  });
+}
+
+function RejectRequest(e){
+  console.log("---e",e)
+  $.ajax({
+    method:'patch',
+    url: "/staffleave/"+e,
+    headers: {
+        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+    },
+    data:{
+      'pk':e,
+      'status': "Reject"
+    },
+    success: function(){
+      console.log("------------success")
+      document.location = "/staffleaverequests/"
+    },
+    error: function () {
+      console.log("error------")
+      document.location = "/staffleaverequests/"
+    }
+
+  });
+}
+</script>
+{% endblock js%}

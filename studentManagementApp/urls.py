@@ -1,11 +1,13 @@
 from django.contrib import admin
 from django.urls import path
-from studentManagementApp.views import * 
+# from studentManagementApp.views import LoginView,StaffHodRegisterView,CourseView,SessionYearView,SubjectView,TeachersView,StudentView,StaffLeaveView,StudentLeaveView,TeachersDashBoard,takeattendance,Subattendance,TakeAttendance,StudentNotifications,TeacherListView,StudentListView,CourseListView,SubjectListView,SessionListView,StaffLeaveListView,logoutview,StaffApplyLeaveView
 
+from studentManagementApp.views import * 
 urlpatterns = [
     path('', LoginView.as_view(), name='login'),
     # path('tokenlogin/', TokenLogin.as_view(), name='tokenlogin'),
     path('login/', LoginView.as_view(), name='login'),
+    path('logout/', logoutview, name='logout'),
     path('register/',StaffHodRegisterView.as_view(),name="createstudent"),
     path('course/', CourseView.as_view(), name='newcourse'),
     path('course/<int:pk>', CourseView.as_view(), name='newcourse'),
@@ -35,4 +37,21 @@ urlpatterns = [
     path('managesubject/', SubjectListView.as_view(), name='managesubject'),
     path('managesession/', SessionListView.as_view(), name='managesession'),
     path('staffleaverequests/', StaffLeaveListView.as_view(), name='staffleaverequests'),
+    
+    
+    
+    path('staffapplyleave/', StaffApplyLeaveView.as_view(), name='staffapplyleave'),
+    
+    
+    
+    path('studentapplyleave/', StudentApplyLeaveView.as_view(), name='studentapplyleave'),
+    path('myattendance/', MyattendanceView.as_view(), name='myattendance'),
+    path('viewattendance/', ViewAttendanceView.as_view(), name='viewattendance'),
+    path('studentprofile/', StudentProfileView.as_view(), name='studentprofile'),
+    path('staffprofile/', StaffProfileView.as_view(), name='staffprofile'),
+    path('hodprofile/', HodProfileView.as_view(), name='hodprofile'),
+    path('editprofile/', MyProfileView.as_view(), name='editprofile'),
+    
+    
+    
 ]   
