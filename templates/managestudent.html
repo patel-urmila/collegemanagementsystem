@@ -16,29 +16,28 @@
       </tr>
     </thead>
     <tbody>
-        {% for i in student %}
+        {% for i in users %}
             <tr>
                 <th scope="row">{{i.id}}</th>
                 <td><span id="fnmspan{{i.id}}">{{i.first_name}}</span><input id="inputfnm{{i.id}}" value="{{i.first_name}}" hidden/></td>
                 <td><span id="lnmspan{{i.id}}">{{i.last_name}}</span><input id="inputlnm{{i.id}}" value="{{i.last_name}}" hidden/></td>
                 <td><span id="emailspan{{i.id}}">{{i.email}}</span><input id="inputemail{{i.id}}" value="{{i.email}}" hidden/></td>
-                {% comment %} <td><span id="coursespan{{i.id}}">{{i.course}}</span><input id="courseinput{{i.id}}" value="{{i.course}}" hidden/></td> {% endcomment %}
                 <td>
-                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="courseselect" name="courseselect" required>
+                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="courseselect" name="courseselect" required disabled>
                     {%for j in i.courses %}
-                    {% comment %} {% if i.course == j.courseName%}
+                    {% if i.course == j.courseName%}
                     <option value="{{j.pk}}" selected>{{j.courseName}}</option>
-                    {%endif%} {% endcomment %}
+                    {%endif%}
                     <option value="{{j.pk}}">{{j}}</option>
                     {%endfor%}
                   </select>
                 </td>
                 <td>
-                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id ="sessionselect" name="sessionselect" required>
+                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id ="sessionselect" name="sessionselect" required disabled>
                     {%for k in i.sessions %}
-                    {% comment %} {% if i.sessionYear == k%}
+                    {% if i.sessionYear == k%}
                     <option value="{{k.pk}}" selected>{{k}}</option>
-                    {%endif%} {% endcomment %}
+                    {%endif%}
                     <option value="{{k.pk}}">{{k}}</option>
                     {%endfor%}
                   </select>
@@ -78,7 +77,7 @@
             </div>
             <div class="form-group">
               <label for="recipient-name" class="col-form-label">course:</label>
-              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example"  name="courseselectdrop" required>
+              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example"  name="courseselectdrop" required >
                 {%for j in i.courses %}
                 <option value="{{j.pk}}">{{j.courseName}}</option>
                 {%endfor%}
@@ -86,7 +85,7 @@
             </div>
             <div class="form-group">
               <label for="recipient-name" class="col-form-label">sessionYear:</label>
-              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" name="sessionselectdrop " required>
+              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" name="sessionselectdrop " required >
                 {%for k in i.sessions %}
                 <option value="{{k.pk}}">{{k}}</option>
                 {%endfor%}
@@ -103,21 +102,25 @@
   </div>
   {% comment %} {%endfor%} {% endcomment %}
   {% if flag == 2%}
-  <script>
-    window.location.href = "{% url 'login'%}";
-  </script>
+    <script>
+      window.location.href = "{% url 'login'%}";
+    </script>
   {% endif %}
 {% endblock content %}
 {% block js%}
 <script>
+  $(document).ready(function() {
+    $('select').attr('disabled', 'disabled');
+});
     console.log("hello hii-----")
     function updateStudent(e){
         document.getElementById("update_Student"+e).hidden = true
         document.getElementById("fnmspan"+e).hidden = true
         document.getElementById("lnmspan"+e).hidden = true
         document.getElementById("emailspan"+e).hidden = true
-        //document.getElementById("coursespan"+e).hidden = true
-        //document.getElementById("sessionspan"+e).hidden = true
+         $('select').removeAttr('disabled');
+        //document.getElementById("courseselect").attr('disabled','false')
+        //document.getElementById("sessionselect").attr('disabled','false')
         document.getElementById("save_student"+e).removeAttribute("hidden");
         document.getElementById("inputfnm"+e).removeAttribute("hidden");
         document.getElementById("inputlnm"+e).removeAttribute("hidden");

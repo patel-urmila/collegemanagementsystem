@@ -50,8 +50,8 @@
         </thead>
         <tbody>
             {% comment %} {{leaves}} {% endcomment %}
-            {%if leaves is not '' %}
-                {% for i in leaves %}
+            {%if not users.msg %}
+                {% for i in users %}
                     <tr>
                       <th scope="row">{{forloop.counter}}</th>
                       <td>{{i.leave_date}}</td>
@@ -60,7 +60,7 @@
                       <td>{{i.status}}</td>
                     </tr>
                 {% endfor %}
-            {% elif leaves.msg == "No Data Found" %}
+            {% elif users.msg %}
                 <tr>
                     <td colspan="6" class="text-center">No Data Found</td>
                 </tr>
@@ -68,7 +68,7 @@
         </tbody>
       </table>
 </div>
-{%if flag %}
+{% if flag %}
 <script>
     window.location.href = "/login/"
 </script>

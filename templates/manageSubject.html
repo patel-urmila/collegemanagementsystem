@@ -1,14 +1,12 @@
 {% extends "HodDashBoard.html" %}
 {% block content %}
 <h1>Manage Subject</h1>
-<button data-subject-id="{{i.id}}"class="add-button btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="span_course_name">Add Subject</button>
-{% comment %} <div class="container"> {% endcomment %}
+<button data-subject-id="{{i.id}}"class="add-button btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="span_course_name">Add Subject</button> 
     <table class="table">
         <thead class="thead-dark">
           <tr>
             <th scope="col">Subject ID</th>
             <th scope="col">Subject Name</th>
-            {% comment %} <th scope="col">Teacher Name</th> {% endcomment %}
             <th></th>
             <th></th>
           </tr> 
@@ -58,6 +56,11 @@
           </div>
         </div>
       </div>
+      {% if flag %}
+      <script>
+        window.location.href = "/login/"
+      </script>
+      {% endif %}
     {% endblock content %}
     {% block js%}
     <script>

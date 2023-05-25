@@ -22,17 +22,13 @@ def takeattendance(request):
         teacher = Teachers.objects.get(user = user)
         sub = Subjects.objects.filter(teacher=teacher)
         session = SessionYear.objects.all()
-        return render(request,"takeattendance.html",{'sub':sub,'session':session})
+        return render(request,"takeattendance.html",{'user1':user,'sub':sub,'session':session})
 
 class Subattendance(APIView):   
     def post(self,request):
-        print("here---------------",request.POST['subjectselect'])
-        print("here---------------",request.POST['sessionselect'])
         subject = Subjects.objects.get(subName=request.POST['subjectselect'])
         subjectData = Subjects.objects.get(subName=request.POST['subjectselect']).course
-        # studentsData = Students.objects.filter(course = subjectData)
-        # demo = Courses.objects.filter(course = subjectData)
-        # print("-------demo",demo.sessionYear)
+        demo = Students.objects.filter(sessionYear = request.POST['sessionselect'] )
         studentsData = Students.objects.filter(Q(course = subjectData) & Q(sessionYear = request.POST['sessionselect']))
         now = datetime.now(timezone.utc)
         today = now.date()
@@ -119,19 +115,19 @@ class LoginView(TemplateView):
                 accesstoken = str(auth_token['access'])
                 request.session['accessToken'] = accesstoken
                 # request.session.set_expiry(settings.SESSION_COOKIE_AGE)
-                return render(request,'HodDashBoard.html',{"user":user})
+                return render(request,'hodProfile.html',{"user":user})
             elif user.role == "Student":
                 login(request, user)
                 auth_token = get_tokens_for_user(user)
                 accesstoken = str(auth_token['access'])
                 request.session['accessToken'] = accesstoken
-                return render(request,'studentDashBoard.html',{"user":user})
+                return render(request,'studentProfile.html',{"user":user})
             else:
                 auth_token = get_tokens_for_user(user)
                 accesstoken = str(auth_token['access'])
                 request.session['accessToken'] = accesstoken
                 login(request, user)
-                return render(request,'teacherDashBoard.html',{"user":user})
+                return render(request,'staffProfile.html',{"user":user})
                 
         else:
             return render(request,'login.html',{'alert': 'Invalid login credentials'})
@@ -145,15 +141,17 @@ class CourseView(APIView):
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
                 hod = User.objects.get(id=user_id).role == "HOD"
+                loggedIn_user = User.objects.get(id=user_id)
                 # cookie = request.COOKIES['user']
                 if hod is True:
                     if pk is not None:
                         stu = Courses.objects.get(id=pk)
                         serializer = NewCourseSerializer(stu)
                         return Response(serializer.data)
-                    stu = Courses.objects.all()
+                    stu = Courses.objects.all().order_by('pk')
                     serializer = NewCourseSerializer(stu,many = True)
-                    return Response(serializer.data)
+                    data = {'data' : serializer.data,'user' : loggedIn_user}
+                    return Response(data)
                 else:
                     return Response({"msg":"permission denied"})
             except Exception as e:
@@ -178,10 +176,10 @@ class CourseView(APIView):
         hod = User.objects.get(id=user_id).role == "HOD"    
         if hod is True:
             subject = Courses.objects.get(pk=pk)   
-            serializer = CourseSerializer(subject, data=request.data, partial = True)
+            serializer = NewCourseSerializer(subject, data=request.data, partial = True)
             if serializer.is_valid():
                 updated_course = serializer.save()
-                CourseSerializer(updated_course).data
+                NewCourseSerializer(updated_course).data
                 return Response({'msg' : serializer.data})
             return Response(serializer.errors)
         else:
@@ -209,17 +207,19 @@ class SessionYearView(APIView):
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
                 hod = User.objects.get(id=user_id).role == "HOD"
+                loggedIn_user = User.objects.get(id=user_id)
                 if hod is True:
                     id = pk
                     if id is not None:
                         stu = SessionYear.objects.get(id=id)
                         serializer = SessionSerializer(stu)
                         return Response(serializer.data)
-                    stu = SessionYear.objects.all()
+                    stu = SessionYear.objects.all().order_by('pk')
                     data = []
                     for i in stu:
                         data.append({
-                                    "id":i.id,
+                                    'user':loggedIn_user,
+                                    'id':i.id,
                                     'startYear': i.startYear,
                                     'endYear': i.endYear,  
                                 })
@@ -278,13 +278,14 @@ class SubjectView(APIView):
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
                 hod = User.objects.get(id=user_id).role == "HOD"
+                loggedIn_user = User.objects.get(id=user_id)
                 if hod is True:
                     id = pk
                     if id is not None:
                         stu = Subjects.objects.get(id=id)
                         serializer = AddSubjectSerializer(stu)
                         return Response(serializer.data)
-                    stu = Subjects.objects.all()
+                    stu = Subjects.objects.all().order_by('pk')
                     serializer = AddSubjectSerializer(stu,many = True)
                     return Response(serializer.data)
                 else:
@@ -303,7 +304,6 @@ class SubjectView(APIView):
                 return Response({'msg' : serializer.data})
             return Response(serializer.errors)
         else:
-            print("denied")
             return Response({"msg":"permission denied"})
 
     def patch(self,request,pk = None,format = None):
@@ -348,7 +348,7 @@ class TeachersView(APIView):
                         teacher = Teachers.objects.get(id=id)
                         serializer = TeacherSerializer(teacher)
                         teacher={
-                            'user':loggedIn_user.first_name,
+                            'user':loggedIn_user,
                             'id': teacher.id,
                             'user_id':teacher.user.id,
                             'email': teacher.user.email,
@@ -360,7 +360,7 @@ class TeachersView(APIView):
                     teacher_info = []
                     for i in teachers:
                         teacher_info.append({
-                            'user':loggedIn_user.first_name,
+                            'user':loggedIn_user,
                             'id': i.id,
                             'user_id':i.user.id,
                             'email': i.user.email,
@@ -390,8 +390,7 @@ class TeachersView(APIView):
         return Response({'msg': 'Permission Denied'})
         
     
-    # def patch(self,request,pk = None,format = None):
-    def patch(self,request,pk= None, *args, **kwargs):
+    def patch(self,request,pk= None, format = None):
         d_token = decode_token(request.session['accessToken'])
         user_id = d_token['user_id']
         user = User.objects.get(id = user_id)
@@ -425,12 +424,14 @@ class StudentView(APIView):
                 token = AccessToken(request.session['accessToken'])
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
+                loggedIn_user = User.objects.get(id= user_id)
                 courses = Courses.objects.all()
                 sessions = SessionYear.objects.all()
                 if pk is not None:
                     student = Students.objects.get(id=pk)
                     serializer = StudentSerializer(student)
                     teacher={
+                        'user':loggedIn_user,
                         'courses':courses,
                         'sessions':sessions,
                         'id': student.id,
@@ -443,11 +444,12 @@ class StudentView(APIView):
 
                     }
                     return Response(teacher)
-                student = Students.objects.all()
+                student = Students.objects.all().order_by('pk')
                 student_info = []
                 student_info1 = []
                 for i in student:
                     student_info.append({
+                        'user':loggedIn_user,
                         'courses':courses,
                         'sessions':sessions,
                         'id': i.id,
@@ -503,9 +505,11 @@ class StaffLeaveView(APIView):
                 AccessToken(request.session['accessToken'])
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
+                loggedIn_user  = User.objects.get(id = user_id)
                 if pk is not None:
                     if User.objects.get(id = user_id).role == "HOD":
                         leave = StaffLeave.objects.get(id=pk)
+                        user = User.objects.get(id = user_id)
                         leaves={
                                 'id': leave.id,
                                 'Teacher': leave.teacher.user.first_name,
@@ -523,6 +527,7 @@ class StaffLeaveView(APIView):
                             teacher_info = []
                             for i in leave:
                                 teacher_info.append({
+                                    'user':loggedIn_user,
                                     'id': i.id,
                                     'Teacher': i.teacher.user.first_name,
                                     'leave_date': i.leaveDate,
@@ -540,6 +545,7 @@ class StaffLeaveView(APIView):
                         teacher_info = []
                         for i in teachers:
                             teacher_info.append({
+                                'user':loggedIn_user,
                                 'id': i.id,
                                 'Teacher': i.teacher.user.first_name,
                                 'leave_date': i.leaveDate,
@@ -555,6 +561,7 @@ class StaffLeaveView(APIView):
                             teacher_info = []
                             for i in leave:
                                 teacher_info.append({
+                                    'user':loggedIn_user,
                                     'id': i.id,
                                     'Teacher': i.teacher.user.first_name,
                                     'leave_date': i.leaveDate,
@@ -563,7 +570,7 @@ class StaffLeaveView(APIView):
                                     'status': i.status
                                 })
                             return Response(teacher_info)
-                        return Response({'msg': 'No Data Found'})
+                        return Response({'msg': 'No Data Found','user':loggedIn_user,})
                     else:
                         return Response({'msg' : "Permission Denied"})
             except Exception:
@@ -594,7 +601,6 @@ class StaffLeaveView(APIView):
     def patch(self,request,pk = None,format = None):
         d_token = decode_token(request.session['accessToken'])
         user_id = d_token['user_id']
-        # leave_id = StaffLeave.objects.get((Q(pk=pk)&Q(user=Teachers.objects.get(user=user_id))) | Q(user=User.objects.get(id=user_id).role=="HOD")) 
         leave_id = StaffLeave.objects.get(pk=pk)  
         serializer = StaffLeaveSerializer(leave_id, data=request.data,partial = True)
         if serializer.is_valid():
@@ -623,10 +629,12 @@ class StudentLeaveView(APIView):
                 AccessToken(request.session['accessToken'])
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
+                loggedIn_user = User.objects.get(id = user_id)
                 if pk is not None:
                     if User.objects.get(id = user_id).role == "HOD":
                         leave = StudentLeave.objects.get(id=pk)
                         leave={
+                                'user':loggedIn_user,
                                 'id': leave.id,
                                 'email': leave.student.user.first_name,
                                 'leave_date': leave.leaveDate,
@@ -643,6 +651,7 @@ class StudentLeaveView(APIView):
                             student_info = []
                             for i in leave:
                                 student_info.append({
+                                    'user':loggedIn_user,
                                     'id': i.id,
                                     'email': i.student.user.first_name,
                                     'leave_date': i.leaveDate,
@@ -659,6 +668,7 @@ class StudentLeaveView(APIView):
                     student_info = []
                     for i in student:
                         student_info.append({
+                            'user':loggedIn_user,
                             'id': i.id,
                             'email': i.student.user.first_name,
                             'leave_date': i.leaveDate,
@@ -674,6 +684,7 @@ class StudentLeaveView(APIView):
                         student_info = []
                         for i in leave:
                             student_info.append({
+                                'user':loggedIn_user,
                                 'id': i.id,
                                 'email': i.student.user.first_name,
                                 'leave_date': i.leaveDate,
@@ -682,7 +693,7 @@ class StudentLeaveView(APIView):
                                 'status': i.status
                             })
                         return Response(student_info)
-                    return Response({'msg': 'No Data Found'})
+                    return Response({'msg': 'No Data Found','user':loggedIn_user,})
                 else:
                     return Response({'msg' : "Permission Denied"})
             except Exception:
@@ -747,7 +758,7 @@ class TeacherListView(TemplateView):
         if response.status_code == status.HTTP_200_OK:
             flag=1
             context = {
-                'teacher': response.data,
+                'users': response.data,
                 'flag' : 1
             }
             return context
@@ -765,7 +776,7 @@ class StudentListView(TemplateView):
         response = StudentView.as_view()(self.request)
         if response.status_code == status.HTTP_200_OK:
             context = {
-                'student':response.data
+                'users':response.data
             }
             return context
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -781,7 +792,7 @@ class CourseListView(TemplateView):
         response = CourseView.as_view()(self.request)
         if response.status_code == status.HTTP_200_OK:
             context = {
-                'course':response.data
+                'users':response.data
             }
             return context
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -813,7 +824,7 @@ class SessionListView(TemplateView):
         response = SessionYearView.as_view()(self.request)
         if response.status_code == status.HTTP_200_OK:
             context = {
-                'session':response.data
+                'users':response.data
             }
             return context
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -829,7 +840,7 @@ class StaffLeaveListView(TemplateView):
         response = StaffLeaveView.as_view()(self.request)
         if response.status_code == status.HTTP_200_OK:
             context = {
-                'leaves':response.data
+                'users':response.data
             }
             return context
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -846,7 +857,7 @@ class StaffApplyLeaveView(TemplateView):
         response = StaffLeaveView.as_view()(self.request)
         if response.status_code == status.HTTP_200_OK:
             context = {
-                'leaves':response.data
+                'users':response.data
             }
             return context
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -864,7 +875,7 @@ class StudentApplyLeaveView(TemplateView):
         print(response.data,"ppppp")
         if response.status_code == status.HTTP_200_OK:
             context = {
-                'leaves':response.data
+                'users':response.data
             }
             return context
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -880,7 +891,7 @@ class ViewAttendanceView(TemplateView):
         response = MyattendanceView.as_view()(self.request)
         if response.status_code == status.HTTP_200_OK:
             context = {
-                'subject':response.data
+                'users':response.data
             }
             return context
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -948,9 +959,10 @@ class MyProfileView(APIView):
                 user_id = d_token['user_id']
                 user = User.objects.get(id = user_id)
                 data = {
+                    "profile1":user.profile_img,
                     "user_id":user.pk,
-                    "fnm":user.first_name,
-                    "lnm":user.last_name,
+                    "first_name":user.first_name,
+                    "last_name":user.last_name,
                     "email":user.email,
                     "password":user.password,
                     "role": user.role  
@@ -964,19 +976,32 @@ class MyProfileView(APIView):
                 AccessToken(request.session['accessToken'])
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
-                user = User.objects.get(id = user_id)
-                user.first_name = request.data['fnm']
-                user.last_name = request.data['lnm']
-                user.email = request.data['email']
-                user.save()
-                print(request.data)
-                data = {
-                    "user_id":user.pk,
-                    "fnm":user.first_name,
-                    "lnm":user.last_name,
-                    "email":user.email  
-                }
-                return Response(data)
+                if request.FILES['uploaded_file']:
+                    print("profile image ===",request.FILES['uploaded_file'])
+                    user = User.objects.get(id = user_id)
+                    user.profile_img = request.FILES['uploaded_file']
+                    user.save()
+                    data = {
+                        "user_id":user.pk,
+                        "fnm":user.first_name,
+                        "lnm":user.last_name,
+                        "email":user.email,
+                        "profile_img":user.profile_img  
+                    }
+                    return Response(data)
+                else:
+                    user = User.objects.get(id = user_id)
+                    user.first_name = request.data['fnm']
+                    user.last_name = request.data['lnm']
+                    user.email = request.data['email']
+                    user.save()
+                    data = {
+                        "user_id":user.pk,
+                        "fnm":user.first_name,
+                        "lnm":user.last_name,
+                        "email":user.email  
+                    }
+                    return Response(data)
             except Exception:
                 return Response({'msg': 'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
         
@@ -987,10 +1012,14 @@ class MyattendanceView(APIView):
         if request.session.has_key('accessToken'):
             try:
                 AccessToken(request.session['accessToken'])
+                d_token = decode_token(request.session['accessToken'])
+                user_id = d_token['user_id']
+                user = User.objects.get(id= user_id)
                 subject = Subjects.objects.all()
                 mainData = []
                 for i in subject:
                     mainData.append({
+                        'user':user,
                         'subId':i.pk,
                         'subnm':i.subName
                     })
@@ -1002,6 +1031,19 @@ class MyattendanceView(APIView):
         d_token = decode_token(request.session['accessToken'])
         user_id = d_token['user_id']
         serializer = MyAttendanceSerializer(data=request.data)
+        if request.data['subjects'] == 'All':
+            start_date = request.data['start_date']
+            end_date = request.data['end_date']
+            student = Students.objects.get(user = user_id)
+            attendance = Attendance.objects.filter(student = student).filter(created_at__date__range = (start_date,end_date)).order_by('created_at')
+            attendance_arr = []
+            for i in attendance:
+                attendance_arr.append({
+                    "subject":i.subject.subName,
+                    "status":i.status,
+                    "date":i.created_at
+                })
+            return Response(attendance_arr)            
         if serializer.is_valid():
             start_date = serializer.validated_data['start_date']
             end_date = serializer.validated_data['end_date']

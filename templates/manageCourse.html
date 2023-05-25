@@ -13,11 +13,19 @@
       </tr> 
     </thead>
     <tbody>
-        {% for i in course %}
+      {{users.user.profile_img.url}}
+        {% for i in users.data %}
             <tr>
                 <th scope="row">{{i.id}}</th>
-                <td><span id="spancoursename{{i.id}}">{{i.courseName}}</span><input id="courseinput{{i.id}}" value="{{i.courseName}}" hidden/></td>
-                <td><span id="spansessionyear{{i.id}}">{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}}</span><input id="sessioninput{{i.id}}" value="{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}}" hidden/> </td>
+                <td>
+                  <span id="spancoursename{{i.id}}">{{i.courseName}}</span>
+                  <input id="courseinput{{i.id}}" value="{{i.courseName}}" hidden/>
+                </td>
+                <td>
+                  <span id="spansessionyear{{i.id}}">{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}}</span>
+                  <input id="sessioninput{{i.id}}" value="{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}}" hidden/> 
+                  <input id="sessionyearinput{{i.id}}" value="{{i.sessionYear.id}}" hidden/> 
+                </td>
                 <td>                    
                   <button class="btn btn-warning" id='updateCourse{{i.id}}' onclick='updatecourse({{i.id}})' >edit</button>
                   <button class="btn btn-primary" id='saveCourse{{i.id}}' onclick='savecoursedata({{i.id}})'hidden>Save</button>
@@ -53,6 +61,11 @@
       </div>
     </div>
   </div>
+  {% if flag %}
+    <script>
+        window.location.href = "/login/"
+    </script>
+  {% endif %}
 {% endblock content %}
 {% block js%}
 <script>
@@ -69,7 +82,8 @@
     function savecoursedata(e){
         console.log("here---")
         course = document.getElementById("courseinput"+e).value;
-        session = document.getElementById("sessioninput"+e).value;
+        session = document.getElementById("sessionyearinput"+e).value;
+        console.log("session---++",session)
         //lnm = document.getElementById("lnminput"+e).value;
         $.ajax({
             method: "patch",
@@ -78,8 +92,9 @@
                 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
             },
             data:{
-                'pk':e,
+                'id':e,
                 'courseName': course,
+                'sessionYear': session
             },
             success: function(){
                 console.log("--------success")

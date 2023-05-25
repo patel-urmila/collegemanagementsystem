@@ -13,11 +13,11 @@
       </tr>
     </thead>
     <tbody>
-        {% for i in session %}
+        {% for i in users %}
             <tr>
                 <th scope="row">{{i.id}}</th>
-                <td><span id="spanstartYear{{i.id}}">{{i.startYear}}</span><input id="startYearinput{{i.id}}" value="{{i.startYear}}" hidden/></td>
-                <td><span id="spanendYear{{i.id}}">{{i.endYear}}</span><input id="endYearinput{{i.id}}" value="{{i.endYear}}" hidden/></td>
+                <td><span id="spanstartYear{{i.id}}">{{i.startYear}}</span><input type="date" id="startYearinput{{i.id}}"  hidden/></td>
+                <td><span id="spanendYear{{i.id}}">{{i.endYear}}</span><input type="date" id="endYearinput{{i.id}}"  hidden/></td>
                 <td>                
                   <button class="btn btn-warning" id='upadteSessiondata{{i.id}}' onclick='updateSession({{i.id}})' >Edit</button>
                   <button class="btn btn-primary" id='saveSessiondata{{i.id}}' onclick='saveSessiondata({{i.id}})'hidden>Save</button>
@@ -54,6 +54,11 @@
       </div>
     </div>
   </div>
+  {% if flag %}
+    <script>
+        window.location.href = "/login/"
+    </script>
+  {% endif %}
 {% endblock content %}
 {% block js%}
 <script>
@@ -62,9 +67,26 @@
         document.getElementById("upadteSessiondata"+e).hidden = true
         document.getElementById("spanstartYear"+e).hidden = true
         document.getElementById("spanendYear"+e).hidden = true
+        startYear = document.getElementById("spanstartYear"+e).innerText
+        endYear = document.getElementById("spanendYear"+e).innerText
+        console.log(startYear,"demo-----------",endYear)
         document.getElementById("saveSessiondata"+e).removeAttribute("hidden");
         document.getElementById("startYearinput"+e).removeAttribute("hidden");
         document.getElementById("endYearinput"+e).removeAttribute("hidden");
+        const dateValue1 = new Date(startYear);
+        const year1 = dateValue1.getFullYear();
+        const month1 = (dateValue1.getMonth() + 1).toString().padStart(2, "0");
+        const day1 = dateValue1.getDate().toString().padStart(2, "0");
+
+        const dateValue2 = new Date(endYear);
+        const year2 = dateValue2.getFullYear();
+        const month2 = (dateValue2.getMonth() + 1).toString().padStart(2, "0");
+        const day2 = dateValue2.getDate().toString().padStart(2, "0");
+        const formattedDate1 = `${year1}-${month1}-${day1}`;
+        const formattedDate2 = `${year2}-${month2}-${day2}`;
+        console.log(formattedDate1,"date vakue one ",formattedDate2)
+        document.getElementById("startYearinput"+e).value = formattedDate1;
+        document.getElementById("endYearinput"+e).value = formattedDate2;
     }
 
     function saveSessiondata(e){

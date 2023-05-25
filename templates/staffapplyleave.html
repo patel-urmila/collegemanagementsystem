@@ -42,22 +42,23 @@
             <th scope="col">From Date</th>
             <th scope="col">To Date</th>
             <th scope="col">Note</th>
+            <th scope="col">Status</th>
           </tr>
         </thead>
         <tbody>
-            {{leaves.msg}}
-            {% if leaves is not '' %}
-                {% for i in leaves %}
+            {% if not users.msg %}
+                {% for i in users %}
                     {% if i.status == "Requested" %}
                         <tr>
-                          {% comment %} <th scope="row">{{forloop.counter}}</th> {% endcomment %}
+                          <th scope="row">{{forloop.counter}}</th>
                           <td>{{i.leave_date}}</td>
                           <td>{{i.leave_date}}</td>
                           <td>{{i.leave_msg}}</td>
+                          <td>{{i.status}}</td>
                         </tr>
                     {% endif %}
                 {% endfor %}
-            {% else %}
+            {% elif users.msg %}
                 <tr>
                     <td colspan="6" class="text-center">No Data Found</td>
                 </tr>
@@ -81,17 +82,19 @@
             <th scope="col">From Date</th>
             <th scope="col">To Date</th>
             <th scope="col">Note</th>
+            <th scope="col">Status</th>
           </tr>
         </thead>
         <tbody>
-            {% if leaves is not ''%}
-                {% for i in leaves %}
+            {% if not users.msg %}
+                {% for i in users %}
                     {% if i.status == "Reject" or i.status == "Approve" %}
                         <tr>
                           <th scope="row">{{forloop.counter}}</th>
                           <td>{{i.leave_date}}</td>
                           <td>{{i.leave_date}}</td>
                           <td>{{i.leave_msg}}</td>
+                          <td>{{i.status}}</td>
                         </tr>
                     {% endif %}
                 {% endfor %}
@@ -103,6 +106,11 @@
         </tbody>
       </table>
 </div>
+{% if flag %}
+<script>
+    window.location.href = "/login/"
+</script>
+{% endif %}
 {% endblock content %}
 {% block js%}
 <script>

@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.urls import path
-# from studentManagementApp.views import LoginView,StaffHodRegisterView,CourseView,SessionYearView,SubjectView,TeachersView,StudentView,StaffLeaveView,StudentLeaveView,TeachersDashBoard,takeattendance,Subattendance,TakeAttendance,StudentNotifications,TeacherListView,StudentListView,CourseListView,SubjectListView,SessionListView,StaffLeaveListView,logoutview,StaffApplyLeaveView
-
 from studentManagementApp.views import * 
+from django.conf.urls.static import static
+
 urlpatterns = [
     path('', LoginView.as_view(), name='login'),
     # path('tokenlogin/', TokenLogin.as_view(), name='tokenlogin'),
@@ -38,12 +38,7 @@ urlpatterns = [
     path('managesession/', SessionListView.as_view(), name='managesession'),
     path('staffleaverequests/', StaffLeaveListView.as_view(), name='staffleaverequests'),
     
-    
-    
-    path('staffapplyleave/', StaffApplyLeaveView.as_view(), name='staffapplyleave'),
-    
-    
-    
+    path('staffapplyleave/', StaffApplyLeaveView.as_view(), name='staffapplyleave'), 
     path('studentapplyleave/', StudentApplyLeaveView.as_view(), name='studentapplyleave'),
     path('myattendance/', MyattendanceView.as_view(), name='myattendance'),
     path('viewattendance/', ViewAttendanceView.as_view(), name='viewattendance'),
@@ -54,4 +49,4 @@ urlpatterns = [
     
     
     
-]   
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

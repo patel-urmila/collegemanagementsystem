@@ -71,9 +71,14 @@ div.content {
 #myDiv {
   width: 70px;
   height: 70px;
-  background-color: #ff0000;
   border-radius: 50%;
+  overflow: hidden;
+}
 
+#myDiv img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 
@@ -84,11 +89,37 @@ div.content {
 <div class="sidebar">
   <div class="d-flex">
     <div class="my-3 m-3">
-      <div id="myDiv" class="my-auto">
+      <div id="myDiv" class="my-auto d-flex">
+          {% if user.profile1 %}
+              <img id="imgFileUpload" style="cursor: pointer" onclick="openFileInput()" src="{{user.profile1.url}}" alt="profile-" />
+              <input type="file" id="FileUpload1" style="display: none" >
+          {% endif %}
+          {% if user %}
+              {% if user.profile_img %}
+                <img id="imgFileUpload" style="cursor: pointer" onclick="openFileInput()" src="{{user.profile_img.url}}" alt="img**" />
+                <input type="file" id="FileUpload1" style="display: none" >
+              {% endif %}
+          {% endif %} 
+          {% if users %}
+          {% for i in users|slice:":1"%}
+              {% if i.user.profile_img %}
+                  <img id="imgFileUpload" style="cursor: pointer" onclick="openFileInput()" src="{{i.user.profile_img.url}}" alt="profile-**" />
+                  <input type="file" id="FileUpload1" style="display: none" >
+              {% endif %}
+          {% endfor %}
+          <img id="imgFileUpload" style="cursor: pointer" onclick="openFileInput()" src="{{users.user.profile_img.url}}" alt="profile-11" />
+          <input type="file" id="FileUpload1" style="display: none" > 
+        {% endif %}
       </div>
     </div>
     <div class="text-white h3 px-md-4 my-auto">
-      Urmila
+      {{user.first_name}}
+      {% if users  %}
+        {% for i in users|slice:":1"%}
+            {{i.user.first_name}}
+        {% endfor %} 
+      {% endif %}
+      {{users.user.first_name}}
     </div>
   </div>
   <hr>
@@ -120,6 +151,53 @@ div.content {
   {% block content %}
   {% endblock content %}
 </div>
+<script>
+  console.log("hello---")
+
+  function openFileInput() {
+    document.getElementById('FileUpload1').click();
+  }
+
+  document.getElementById('FileUpload1').addEventListener('change', function(event) {
+    var previewOnProfile = document.getElementById("imgFileUpload");
+    const file = event.target.files[0];
+    var reader = new FileReader();
+
+    reader.addEventListener(
+      "load",
+      function () {
+          previewOnProfile.src = reader.result;
+      },
+    );
+      if (file) {
+        reader.readAsDataURL(file);
+        const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+        const fdata = new FormData();
+        const xhttp = new XMLHttpRequest();
+        const header = "X-CSRFToken";
+
+        fdata.append("uploaded_file", file);
+        console.log("fdata",fdata)
+
+        xhttp.open("POST", "/editprofile/");
+        xhttp.setRequestHeader(header, csrftoken);
+        xhttp.send(fdata);
+
+        xhttp.onload = () => {
+            if (xhttp.readyState === 4) {
+                const received = xhttp.responseText;
+                console.log("received",rec)
+                if (xhttp.status === 200) {
+                    previewOnProfile.setAttribute("src", received);
+                    console.log("success----")
+                } else {
+                  console.log("error here---")
+                }
+              }
+        };
+      }
+  });
+</script>
 {% block js%}
 <script>
 </script>

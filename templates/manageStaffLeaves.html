@@ -14,7 +14,7 @@
       </tr>
     </thead>
     <tbody>
-        {% for i in leaves %}
+        {% for i in users %}
             <tr>
                 <th scope="row">{{i.id}}</th>
                 <td>{{i.Teacher}}</td>
@@ -26,6 +26,11 @@
         {% endfor %}
     </tbody>
   </table>
+  {% if flag %}
+    <script>
+        window.location.href = "/login/"
+    </script>
+  {% endif %}
 {% endblock content %}
 {% block js%}
 <script>

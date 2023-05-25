@@ -15,9 +15,13 @@
           {% csrf_token %}
           <label for="recipient-name" class="col-form-label">Subject :</label>
           <select class="form-control form-control-lg form-select form-select-lg mb-3 w-100" aria-label=".form-select-lg example" id="subjectselect" name="subjectselect" required>
-            {%for i in sub%}
-              <option value="{{i.subName}}">{{i.subName}}</option>
-            {%endfor%}
+            {% if sub %}
+              {%for i in sub%}
+                <option value="{{i.subName}}">{{i.subName}}</option>
+              {%endfor%}
+            {% else %}
+              <option value="None">None</option>
+            {% endif %}
           </select>
         </div>
         <div class="form-group">
@@ -56,14 +60,18 @@
            
         </tbody>
     </table>
-</div>  
+</div> 
+{% if flag %}
+<script>
+    window.location.href = "/login/"
+</script>
+{% endif %} 
 {% endblock content %}  
 {% block js%}
 <script>
 
 $('#fetchstudent').click(function(event) 
   {
-    console.log("event-----",event)
       event.preventDefault();
       var subject1 = $('#subjectselect').val();
       var Year1 = $('#sessionselect').val();
@@ -101,19 +109,20 @@ $('#fetchstudent').click(function(event)
                 
                 if (userExists) 
                 {
-                    list1.forEach(user => 
+                    list1.forEach((user,index) => 
                     {
                       const userId = user.user_id;
                       const userStatus = list2.find(([id, status]) => id === userId);
+                      console.log("userStatus !== undefined *****",userStatus !== undefined)
+                      no = 1 
                       if (userStatus !== undefined) 
                       {
                         const status = userStatus[1];
                         console.log("loop")
                         if (userStatus[1] == true )
                         {
-                          no = 1 
-                          rows += '<tr id="row-' + no + '">';
-                          rows += '<td>' + no + '</td>';
+                          rows += '<tr id="row-' + index + '">';
+                          rows += '<td>' + index + '</td>';
                           rows += '<td class = "user_id">' + user.user_id + '</td>';
                           rows += '<td class = "fnmlnm">' + user.fnm + '   ' + user.lnm + '</td>';
                           rows += '<td class = "email">' + user.email + '</td>';
@@ -124,9 +133,8 @@ $('#fetchstudent').click(function(event)
                         }
                         else if  (userStatus[1] == false )
                         {
-                          no = 1 
-                          rows += '<tr id="row-' + no + '">';
-                          rows += '<td>' + no + '</td>';
+                          rows += '<tr id="row-' + index + '">';
+                          rows += '<td>' + index + '</td>';
                           rows += '<td class = "user_id">' + user.user_id + '</td>';
                           rows += '<td class = "fnmlnm">' + user.fnm + '   ' + user.lnm + '</td>';
                           rows += '<td class = "email">' + user.email + '</td>';
@@ -136,6 +144,18 @@ $('#fetchstudent').click(function(event)
                           $('#attendanceTable tbody').html(rows);
                           console.log(`User ${userId} has status ${status}`);
                         }
+                      }
+                      else {
+                        rows += '<tr id="row-' + index + '">';
+                        rows += '<td>' + index + '</td>';
+                        rows += '<td class = "user_id">' + user.user_id + '</td>';
+                        rows += '<td class = "fnmlnm">' + user.fnm + '   ' + user.lnm + '</td>';
+                        rows += '<td class = "email">' + user.email + '</td>';
+                        rows += '<td><button class="presentBtn btn btn-warning" id="presentbtn-'+ no +'" > Present </button></td>';
+                        rows += '<td><button class="absentBtn btn btn-danger" id="absentbtn-'+ no +'" > Absent </button></td>';
+                        rows += '</tr>';
+                        $('#attendanceTable tbody').html(rows);
+                        console.log(`User ${userId} has status ${status}`);
                       }
                     }
                   );

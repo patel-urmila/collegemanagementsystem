@@ -16,7 +16,8 @@
     </thead>
     <tbody>
         {% csrf_token %}
-        {% for i in teacher %}
+        
+        {% for i in users %}
             <tr>
                 <th scope="row">{{i.id}}</th>
                 <td><span id="spanfnm{{i.id}}">{{i.first_name}} </span><input id="fnminput{{i.id}}" value={{i.first_name}} hidden/></td>
@@ -70,7 +71,7 @@
   </div>
 {% elif flag == 2%}
 <script>
-  window.location.href = "{% url 'login'%}";
+  window.location.href = '/login/';
 </script>
 {% endif %}
 {% endblock content %}
