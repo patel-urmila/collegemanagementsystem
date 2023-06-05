@@ -36,6 +36,10 @@
                     <i class="fa-solid fa-check text-2xl m-3" onclick="saveData(this)" hidden></i>
                 </div>
             </div>
+            <div>
+                <label class="form-label" for="Note">Profile Picture:</label>
+                <input type="file" id="ProfilePicture"  />
+            </div>
         </form>
     </div>
 </div>
@@ -60,14 +64,12 @@ function editData(button){
 function saveData(button){
     $.ajax({
         url:"/editprofile/",
-        method:'post',
-        headers: {
-            'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
-        },
+        method:'patch',
         data:{
             'fnm': $('#Fname').val(),
             'lnm': $("#Lname").val(),
-            'email': $("#emailId").val()
+            'email': $("#emailId").val(),
+            csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
         },
         success:function(){
             pre = button.previousElementSibling
@@ -82,11 +84,47 @@ function saveData(button){
             console.log("error-----")
         }
     })
-
-    //fnm= $("#Fname").val()
-    //lnm= $("#Lname").val()
-    //email= $("#emailId").val()
-
 }
+document.getElementById('ProfilePicture').addEventListener('change', function(event) {
+    var previewOnProfile = document.getElementById("imgFileUpload");
+    console.log("here---------previewOnProfile",previewOnProfile)
+    const file = event.target.files[0];
+    var reader = new FileReader();
+
+    reader.addEventListener(
+      "load",
+      function () {
+          previewOnProfile.src = reader.result;
+      },
+    );
+      if (file) {
+        reader.readAsDataURL(file);
+        const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+        const fdata = new FormData();
+        const xhttp = new XMLHttpRequest();
+        const header = "X-CSRFToken";
+
+        fdata.append("uploaded_file", file);
+        console.log("fdata",fdata)
+
+        xhttp.open("POST", "/editprofile/");
+        xhttp.setRequestHeader(header, csrftoken);
+        xhttp.send(fdata);
+
+        xhttp.onload = () => {
+            if (xhttp.readyState === 4) {
+                const received = xhttp.responseText;
+                console.log("received",rec)
+                if (xhttp.status === 200) {
+                    previewOnProfile.setAttribute("src", received);
+                    window.location.href = "/studentprofile/"
+                    console.log("success----")
+                } else {
+                  console.log("error here---")
+                }
+              }
+        };
+      }
+  });
 </script>
 {% endblock js%}

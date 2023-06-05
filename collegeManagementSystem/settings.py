@@ -95,6 +95,16 @@ DATABASES = {
         "PORT":5432,
     }
 }
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv('POSTGRES_DB'),
+#         "USER":os.getenv('POSTGRES_USER'),
+#         "PASSWORD":os.getenv('POSTGRES_PASSWORD'),
+#         "HOST":"db",
+#         "PORT":5432,
+#     }
+# }
 
 
 # Password validation
@@ -159,5 +169,13 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
 }
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'up.empiric@gmail.com'
+EMAIL_HOST_PASSWORD = 'cvjvexwguoynsjhn'

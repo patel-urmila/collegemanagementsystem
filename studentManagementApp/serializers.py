@@ -2,22 +2,45 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth import authenticate
 
+class UserRegistrationSerializer(serializers.Serializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        print("is here----")
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+
+        if password and password != confirm_password:
+            raise serializers.ValidationError("Passwords do not match.")
+
+        return data
+
+    def create(self, validated_data):
+        print("hooooo")
+        validated_data.pop('confirm_password')
+        user = User.objects.create_user(**validated_data)
+        return user
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
     
     class Meta:
         model = User
-        fields = ['first_name','last_name','email','password','confirm_password','role']
-        
+        fields = ['first_name','last_name','email','password','confirm_password']
     def create(self, validated_data):
+        print("hooo----here")
         password = validated_data.pop('password')
         confirm_password = validated_data.pop('confirm_password')
-        roles = validated_data['role']
+        # roles = validated_data['role']
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match")
         
-        user = User.objects.create(first_name=validated_data['first_name'],last_name=validated_data['last_name'],email=validated_data['email'],role=validated_data['role'],is_staff=True,is_superuser = True)
+        user = User.objects.create(first_name=validated_data['first_name'],last_name=validated_data['last_name'],email=validated_data['email'],role='HOD',is_staff=True,is_superuser = True)
 
         user.set_password(password)
         user.save()

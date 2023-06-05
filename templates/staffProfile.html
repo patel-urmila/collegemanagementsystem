@@ -1,10 +1,11 @@
     
 {% extends "teacherDashBoard.html" %}
 {% block content %}
+{% load static %}
 {% comment %} <h3 class="m-2 p-3">Leave Report and Apply For Leave</h3> {% endcomment %}
-<div class="jumbotron jumbotron-fluid text-bg-primary m-3 p-3">
+<div class="jumbotron jumbotron-fluid text-bg-primary p-3">
     <div class="container m-3">
-        <h1>Profile</h1>
+        <h2>Profile</h2>
     </div>
 </div>
 {% if user %}
@@ -60,14 +61,12 @@ function editData(button){
 function saveData(button){
     $.ajax({
         url:"/editprofile/",
-        method:'post',
-        headers: {
-            'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
-        },
+        method:'patch',
         data:{
             'fnm': $('#Fname').val(),
             'lnm': $("#Lname").val(),
-            'email': $("#emailId").val()
+            'email': $("#emailId").val(),
+            csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
         },
         success:function(){
             pre = button.previousElementSibling

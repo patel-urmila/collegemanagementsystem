@@ -8,7 +8,7 @@ urlpatterns = [
     # path('tokenlogin/', TokenLogin.as_view(), name='tokenlogin'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', logoutview, name='logout'),
-    path('register/',StaffHodRegisterView.as_view(),name="createstudent"),
+    path('registration/',StaffHodRegisterView.as_view(),name="createstudent"),
     path('course/', CourseView.as_view(), name='newcourse'),
     path('course/<int:pk>', CourseView.as_view(), name='newcourse'),
     path('session/', SessionYearView.as_view(), name='newsession'),
@@ -37,6 +37,7 @@ urlpatterns = [
     path('managesubject/', SubjectListView.as_view(), name='managesubject'),
     path('managesession/', SessionListView.as_view(), name='managesession'),
     path('staffleaverequests/', StaffLeaveListView.as_view(), name='staffleaverequests'),
+    path('studentsleaverequests/', StudentsLeaveRequestsListView.as_view(), name='studentsleaverequests'),
     
     path('staffapplyleave/', StaffApplyLeaveView.as_view(), name='staffapplyleave'), 
     path('studentapplyleave/', StudentApplyLeaveView.as_view(), name='studentapplyleave'),
@@ -47,6 +48,14 @@ urlpatterns = [
     path('hodprofile/', HodProfileView.as_view(), name='hodprofile'),
     path('editprofile/', MyProfileView.as_view(), name='editprofile'),
     
-    
+    path('register/',Register.as_view(),name="register"),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
+# make update based on below points in sort line of update
+# try diffrent commands of docker 
+# made changes in edit profile
+# made changes in apply leave students side
+# made chnages in add subject

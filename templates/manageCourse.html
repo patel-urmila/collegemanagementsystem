@@ -1,40 +1,48 @@
 {% extends "HodDashBoard.html" %}
 {% block content %}
-<h1>Manage Course</h1>
-<button  data-course-id="{{i.id}}"class="add-button btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="span_course_name">Add New Course</button>
-<table class="table">
-    <thead class="thead-dark">
-      <tr>
-        <th scope="col">course Id</th>
-        <th scope="col">Course Name</th>
-        <th scope="col">session Year</th>
-        <th></th>
-        <th></th>
-      </tr> 
-    </thead>
-    <tbody>
-      {{users.user.profile_img.url}}
-        {% for i in users.data %}
-            <tr>
-                <th scope="row">{{i.id}}</th>
-                <td>
-                  <span id="spancoursename{{i.id}}">{{i.courseName}}</span>
-                  <input id="courseinput{{i.id}}" value="{{i.courseName}}" hidden/>
-                </td>
-                <td>
-                  <span id="spansessionyear{{i.id}}">{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}}</span>
-                  <input id="sessioninput{{i.id}}" value="{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}}" hidden/> 
-                  <input id="sessionyearinput{{i.id}}" value="{{i.sessionYear.id}}" hidden/> 
-                </td>
-                <td>                    
-                  <button class="btn btn-warning" id='updateCourse{{i.id}}' onclick='updatecourse({{i.id}})' >edit</button>
-                  <button class="btn btn-primary" id='saveCourse{{i.id}}' onclick='savecoursedata({{i.id}})'hidden>Save</button>
-                </td>
-                <td><button id="{{i.id}}" class="btn btn-danger" onclick='deletecoursedata({{i.id}})'>Delete</button></td>  
-            </tr>
-        {% endfor %}
-    </tbody>
-  </table>
+<div class="jumbotron jumbotron-fluid text-bg-primary p-3">
+  <div class="container m-3">
+      <h2>Manage Course</h2>
+  </div>
+</div>
+<div class="m-5">
+  <button  data-course-id="{{i.id}}"class="add-button btn btn-primary mb-4" data-toggle="modal" data-target="#exampleModal" id="span_course_name">Add New Course</button>
+    <table class="table">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col">Course Id</th>
+            <th scope="col">Course Name</th>
+            <th scope="col">Session Year</th>
+            <th></th>
+            <th></th>
+          </tr> 
+        </thead>
+        <tbody>
+            {% for i in users.data %}
+                <tr>
+                    <th scope="row">{{i.id}}</th>
+                    <td>
+                      <span id="spancoursename{{i.id}}">{{i.courseName}}</span>
+                      <input id="courseinput{{i.id}}" class="form-control" value="{{i.courseName}}" hidden/>
+                    </td>
+                    <td>
+                      <span id="spansessionyear{{i.id}}">{{i.sessionYear.startYear}} To {{i.sessionYear.endYear}}</span>
+                      <div class="d-flex">
+                        <input type="date" id="sessioninput1{{i.id}}" class="form-control " value="{{i.sessionYear.startYear}}"  hidden/>
+                        <input type="date" id="sessioninput2{{i.id}}" class="form-control "  value="{{i.sessionYear.endYear}}" hidden/>
+                        <input id="sessionyearinput{{i.id}}" value="{{i.sessionYear.id}}" hidden/> 
+                      </div>
+                    </td>
+                    <td>                    
+                      <button class="btn btn-warning" id='updateCourse{{i.id}}' onclick='updatecourse({{i.id}})' >Edit</button>
+                      <button class="btn btn-primary" id='saveCourse{{i.id}}' onclick='savecoursedata({{i.id}})'hidden>Save</button>
+                    </td>
+                    <td><button id="{{i.id}}" class="btn btn-danger" onclick='deletecoursedata({{i.id}})'>Delete</button></td>  
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
   <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -50,7 +58,8 @@
             </div>
             <div class="form-group">
               <label for="recipient-name" class="col-form-label">Session Year:</label>
-              <input type="text" class="form-control" id="floatingInputSessionYear" placeholder="Enter Session Year" name="sessionYear">
+              <input type="date" id="floatingInputSessionYear1" />
+              <input type="date" id="floatingInputSessionYear2" />
             </div>
           </form>
         </div>
@@ -61,11 +70,11 @@
       </div>
     </div>
   </div>
-  {% if flag %}
+  {% comment %} {% if flag %}
     <script>
         window.location.href = "/login/"
     </script>
-  {% endif %}
+  {% endif %} {% endcomment %}
 {% endblock content %}
 {% block js%}
 <script>
@@ -76,15 +85,17 @@
         document.getElementById("spansessionyear"+e).hidden = true
         document.getElementById("saveCourse"+e).removeAttribute("hidden");
         document.getElementById("courseinput"+e).removeAttribute("hidden");
-        document.getElementById("sessioninput"+e).removeAttribute("hidden");
+        document.getElementById("sessioninput1"+e).removeAttribute("hidden");
+        document.getElementById("sessioninput2"+e).removeAttribute("hidden");
     }
 
     function savecoursedata(e){
-        console.log("here---")
+        console.log("here---",e)
         course = document.getElementById("courseinput"+e).value;
-        session = document.getElementById("sessionyearinput"+e).value;
-        console.log("session---++",session)
-        //lnm = document.getElementById("lnminput"+e).value;
+        demo =  document.getElementById("sessioninput1"+e)
+        console.log("demo---",demo)
+        startyear = document.getElementById("sessioninput1"+e).value;
+        endyear = document.getElementById("sessioninput2"+e).value;
         $.ajax({
             method: "patch",
             url: "/course/"+e,
@@ -94,14 +105,17 @@
             data:{
                 'id':e,
                 'courseName': course,
-                'sessionYear': session
+                'startyear': startyear,
+                'endyear':endyear
             },
             success: function(){
                 console.log("--------success")
+                alert("Record Updated successfully")
                 document.location = "/managecourse/"
             },
             error: function () {
                 console.log("error ---------")
+                alert("Invalid Data !!")
                 document.location = "/managecourse/"
                }
       });
@@ -118,9 +132,11 @@
                 'pk':e,
             },
             success: function(){
+                alert("Record Deleted !")
                 document.location = "/managecourse/"
             },
             error: function () {
+                alert("Failed !!")
                 document.location = "/managecourse/"
                }
       });
@@ -128,7 +144,8 @@
 
     function postcoursedata(){
         Course = document.getElementById("floatingInputcourseNm").value;
-        SessionYear = document.getElementById("floatingInputSessionYear").value;
+        startYear = document.getElementById("floatingInputSessionYear1").value;
+        endYear = document.getElementById("floatingInputSessionYear2").value;
         $.ajax({
             method: "post",
             url: "/course/",
@@ -137,14 +154,17 @@
             },
             data:{
                 'courseName': Course,
-                'sessionYear':SessionYear,
+                'startYear':startYear,
+                'endYear':endYear,
             },
             success: function(){
                 console.log("-------success")
+                alert("Record Created !!")
                 document.location = "/managecourse/"
             },
             error: function () {
                 console.log("error------")
+                alert("Invalid Data !!")
                 document.location = "/managecourse/"
                }
       });

@@ -1,54 +1,63 @@
 {% extends "HodDashBoard.html" %}
 {% block content %}
-<h1>Manage Student</h1>
-<button  data-student-id="{{i.id}}" class="add-button btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="span_name">Add Student</button>
-<table class="table">
-    <thead class="thead-dark">
-      <tr>
-        <th scope="col">Student ID</th>
-        <th scope="col">First Name</th>
-        <th scope="col">Last Name</th>
-        <th scope="col">Email</th>
-        <th scope="col">Course</th>
-        <th scope="col">Session Year</th>
-        <th></th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-        {% for i in users %}
-            <tr>
-                <th scope="row">{{i.id}}</th>
-                <td><span id="fnmspan{{i.id}}">{{i.first_name}}</span><input id="inputfnm{{i.id}}" value="{{i.first_name}}" hidden/></td>
-                <td><span id="lnmspan{{i.id}}">{{i.last_name}}</span><input id="inputlnm{{i.id}}" value="{{i.last_name}}" hidden/></td>
-                <td><span id="emailspan{{i.id}}">{{i.email}}</span><input id="inputemail{{i.id}}" value="{{i.email}}" hidden/></td>
-                <td>
-                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="courseselect" name="courseselect" required disabled>
-                    {%for j in i.courses %}
-                    {% if i.course == j.courseName%}
-                    <option value="{{j.pk}}" selected>{{j.courseName}}</option>
-                    {%endif%}
-                    <option value="{{j.pk}}">{{j}}</option>
-                    {%endfor%}
-                  </select>
-                </td>
-                <td>
-                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id ="sessionselect" name="sessionselect" required disabled>
-                    {%for k in i.sessions %}
-                    {% if i.sessionYear == k%}
-                    <option value="{{k.pk}}" selected>{{k}}</option>
-                    {%endif%}
-                    <option value="{{k.pk}}">{{k}}</option>
-                    {%endfor%}
-                  </select>
-                <td><button type="button" class="btn btn-warning" id='update_Student{{i.id}}' onclick='updateStudent({{i.id}})'>Edit</button>
-                  <button class="btn btn-primary" id='save_student{{i.id}}' onclick='savestudent({{i.id}})'hidden>Save</button>
-                </td>
-                <td><button type="button" class="btn btn-danger" onclick='deletestudent({{i.id}})' >Delete</button></td>  
-            </tr>
-        {% endfor %}
-    </tbody>
+<div class="jumbotron jumbotron-fluid text-bg-primary p-3">
+  <div class="container m-3">
+      <h2>Manage Student</h2>
+  </div>
+</div>
+<div class="m-5">
+    <button  data-student-id="{{i.id}}" class="add-button btn btn-primary mb-4" data-toggle="modal" data-target="#exampleModal" id="span_name">Add Student</button>
+  <table class="table">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Student ID</th>
+          <th scope="col">First Name</th>
+          <th scope="col">Last Name</th>
+          <th scope="col">Email</th>
+          <th scope="col">Course</th>
+          <th scope="col">Session Year</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+          {% for i in users %}
+              <tr>
+                  <th scope="row">{{i.id}}</th>
+                  <td><span id="fnmspan{{i.id}}">{{i.first_name}}</span><input id="inputfnm{{i.id}}" class="form-control" value="{{i.first_name}}" hidden/></td>
+                  <td><span id="lnmspan{{i.id}}">{{i.last_name}}</span><input id="inputlnm{{i.id}}" class="form-control" value="{{i.last_name}}" hidden/></td>
+                  <td><span id="emailspan{{i.id}}">{{i.email}}</span><input id="inputemail{{i.id}}" class="form-control" value="{{i.email}}" hidden/></td>
+                  <td>
+                    <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="courseselect-{{i.id}}" name="courseselect" required disabled>
+                      {%for j in i.courses %}
+                        {% if i.course == j.courseName%}
+                          <option class="p-4 mb-3" value="{{j.pk}}" selected>{{j.courseName}}</option>
+                        {% else %}
+                          <option class="p-4 mb-3" value="{{j.pk}}">{{j}}</option>
+                        {%endif%}
+                      {%endfor%}
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id ="sessionselect-{{i.id}}" name="sessionselect" required disabled>
+                      {%for k in i.sessions %}
+                      {{k}}
+                        {% if i.sessionYear == k%}
+                          <option value="{{k.pk}}" selected>{{k}}</option>
+                        {% else %}
+                          <option value="{{k.pk}}">{{k}}</option>
+                        {%endif%}
+                      {%endfor%}
+                    </select>
+                  <td><button type="button" class="btn btn-warning" id='update_Student{{i.id}}' onclick='updateStudent({{i.id}})'>Edit</button>
+                    <button class="btn btn-primary" id='save_student{{i.id}}' onclick='savestudent({{i.id}})'hidden>Save</button>
+                  </td>
+                  <td><button type="button" class="btn btn-danger" onclick='deletestudent({{i.id}})' >Delete</button></td>  
+              </tr>
+          {% endfor %}
+      </tbody>
   </table>
+</div>
 
   {% comment %} {% for i in student %} {% endcomment %}
   <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -77,17 +86,21 @@
             </div>
             <div class="form-group">
               <label for="recipient-name" class="col-form-label">course:</label>
-              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example"  name="courseselectdrop" required >
-                {%for j in i.courses %}
-                <option value="{{j.pk}}">{{j.courseName}}</option>
+              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="courseselectdrop" name="courseselectdrop" required >
+                {% for i in users|slice:":1"%}
+                  {% for j in i.courses%}
+                    <option value="{{j.pk}}">{{j}}</option>
+                  {%endfor%}
                 {%endfor%}
               </select>
             </div>
             <div class="form-group">
               <label for="recipient-name" class="col-form-label">sessionYear:</label>
-              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" name="sessionselectdrop " required >
-                {%for k in i.sessions %}
-                <option value="{{k.pk}}">{{k}}</option>
+              <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="sessionselectdrop" name="sessionselectdrop " required >
+                {% for i in users|slice:":1"%}
+                  {% for k in i.sessions%}
+                    <option value="{{k.pk}}">{{k}}</option>
+                  {%endfor%}
                 {%endfor%}
               </select>
             </div>
@@ -109,16 +122,14 @@
 {% endblock content %}
 {% block js%}
 <script>
-  $(document).ready(function() {
-    $('select').attr('disabled', 'disabled');
-});
+
     console.log("hello hii-----")
     function updateStudent(e){
         document.getElementById("update_Student"+e).hidden = true
         document.getElementById("fnmspan"+e).hidden = true
         document.getElementById("lnmspan"+e).hidden = true
         document.getElementById("emailspan"+e).hidden = true
-         $('select').removeAttr('disabled');
+        $('select').removeAttr('disabled');
         //document.getElementById("courseselect").attr('disabled','false')
         //document.getElementById("sessionselect").attr('disabled','false')
         document.getElementById("save_student"+e).removeAttribute("hidden");
@@ -134,8 +145,9 @@
         email = document.getElementById("inputemail"+e).value;
         fnm = document.getElementById("inputfnm"+e).value;
         lnm = document.getElementById("inputlnm"+e).value;
-        course = document.getElementById("courseselect").value;
-        console.log("course--",course)
+        coursevalue = document.getElementById("courseselect-"+e).value;
+        sessionValue = document.getElementById("sessionselect-"+e).value;
+        console.log("course--",coursevalue)
         $.ajax({
             method: "patch",
             url: "/student/"+e,
@@ -146,9 +158,12 @@
                 'pk':e,
                 'email': email,
                 'first_name':fnm,
-                'last_name':lnm
+                'last_name':lnm,
+                'course':coursevalue,
+                'sessionYear': sessionValue
             },
             success: function(){
+                alert("Record Updated successfully")
                 document.location = "/managestudent/"
             },
             error: function () {
@@ -168,6 +183,7 @@
                 'pk':e,
             },
             success: function(){
+                alert("Record Deleted !!")
                 document.location = "/managestudent/"
             },
             error: function () {
@@ -181,8 +197,8 @@
         fnm = document.getElementById("floatingInputf_nm").value;
         lnm = document.getElementById("floatingInputl_nm").value;
         pwd = document.getElementById("floatingPwd").value;
-        course = document.getElementById("selectcourse").value;
-        session = document.getElementById("selectsession").value;
+        course = document.getElementById("courseselectdrop").value;
+        session = document.getElementById("sessionselectdrop").value;
         $.ajax({
             method: "post",
             url: "/student/",
@@ -194,14 +210,16 @@
                 'first_name':fnm,
                 'last_name':lnm,
                 'password':pwd,
-                'password':course,
-                'password':session
+                'course':course,
+                'sessionYear':session
             },
             success: function(){
               console.log("success---")
+                alert("student Created successfully")
                 document.location = "/managestudent/"
             },
             error: function () {
+              console.log("error---")
                 document.location = "/managestudent/"
                }
       });

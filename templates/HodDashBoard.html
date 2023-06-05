@@ -36,15 +36,28 @@
   font-size: 15px;
   text-decoration: none;
 }
+.sidebar i {
+  display: block;
+  color: white;
+  padding: 16px;
+  font-size: 15px;
+  text-decoration: none;
+}
  
 .sidebar a.active {
-  background-color: #4287f5;
+  background-color:#9FA6B2;
   color: white;
   font-size: 15px;
 }
 
-.sidebar a:hover:not(.active) {
+{% comment %} .sidebar a:hover:not(.active) {
   background-color: #809aab;
+  color: white;
+  font-size: 15px;
+} {% endcomment %}
+
+.sidenav-bar div:hover:not(.active) {
+  background-color:#9FA6B2;
   color: white;
   font-size: 15px;
 }
@@ -52,7 +65,6 @@
 div.content {
   margin-left: 250px;
   padding: 1px 16px;
-  {% comment %} height: 1000px;{% endcomment %} 
   font-size: large;
 }
 
@@ -84,6 +96,9 @@ div.content {
   height: 100%;
   object-fit: cover;
 }
+.active{ 
+  background-color: #3B71CA;
+}
 </style>
 </head>
 <body>
@@ -92,8 +107,9 @@ div.content {
     <div class="d-flex">
       <div class="my-3 m-3">
         <div id="myDiv" class="my-auto d-flex">
+          {% csrf_token %}
           {% if user %}
-              {% if user.profile_img.url %}
+              {% if user.profile_img %}
                 <img id="imgFileUpload" style="cursor: pointer" src="{{user.profile_img.url}}"  class="mt-10"  alt="img**" onclick="openFileInput()"></img>
                 <input type="file" id="FileUpload1" style="display: none" >
               {% endif %}
@@ -115,54 +131,80 @@ div.content {
             <img id="imgFileUpload" style="cursor: pointer" onclick="openFileInput()" src="{{users.user.profile_img.url}}" alt="p" />
             <input type="file" id="FileUpload1" style="display: none" >
           {% endif %}
+          {% if subject.user %}
+            <img id="imgFileUpload" style="cursor: pointer" onclick="openFileInput()" src="{{subject.user.profile_img.url}}" alt="p" />
+            <input type="file" id="FileUpload1" style="display: none" >
+          {% endif %}
         </div>
       </div>
       <div class="text-white h3 px-md-4 my-auto">
         {{user.first_name}}
         {% if users  %}
-        {% for i in users|slice:":1"%}
-            {{i.user.first_name}}
-        {% endfor %} 
+          {% for i in users|slice:":1"%}
+              {{i.user.first_name}}
+          {% endfor %} 
+        {% endif %}
+        {% if subject.user %}
+          {{subject.user.first_name}}
         {% endif %}
         {{users.first_name}}
         {{users.user.first_name}}
       </div>
     </div>
   <hr>
-  <div>
+  <div class="sidenav-bar">
     <div class="d-flex">
-      <a class="fa-sharp fa-solid fa-circle-user"></a>
+      <i class="fa-sharp fa-solid fa-circle-user"></i>
       <a class="" href="/hodprofile/">Profile</a>
-     
     </div>
+
     <div class="d-flex">
-      <a class="fa-solid fa-users-gear"></a>
+      <i class="fa-solid fa-users-gear"></i>
       <a href="/manageteacher/">Manage Staff</a>
     </div>
+
     <div class="d-flex">
-      <a class="fa-solid fa-user-graduate"></a>
+      <i class="fa-solid fa-user-graduate"></i>
       <a href="/managestudent/">Manage Students</a>
     </div>
+
     <div class="d-flex">
-      <a class="fa-solid fa-graduation-cap"></a>
+      <i class="fa-solid fa-graduation-cap"></i>
       <a href="/managecourse/">Manage Course</a>
     </div>
+
     <div class="d-flex">
-      <a class="fa-solid fa-book-open"></a>
+      <i class="fa-solid fa-book-open"></i>
       <a href="/managesubject/">Manage Subject</a>
     </div>
+
     <div class="d-flex">
-      <a class="fa-solid fa-calendar"></a>
+      <i class="fa-solid fa-calendar"></i>
       <a href="/managesession/">Manage Course Session</a>
     </div>
+
     <div class="d-flex">
-      <a class="fa-solid fa-wallet"></a>
+      <i class="fa-solid fa-wallet"></i>
       <a href="/staffleaverequests/">Leave Requests</a>
     </div>
 
     <div class="d-flex">
-      <a class="fa-solid fa-power-off "></a>
-      <a href="/logout/">LogOut</a>
+      <i class="fa-solid fa-power-off "></i>
+      <a type="button" class="nav-link" data-toggle="modal" data-target=".bd-example-modal-sm">Logout</a>
+    </div>
+
+  </div>
+</div>
+<div class="modal fade bd-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-body">
+        Are You Sure You want to log out ? 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <a class="btn btn-primary" href="/logout/" role="button">Confirm</a>
+      </div>
     </div>
   </div>
 </div>
@@ -177,6 +219,13 @@ div.content {
 </div>  
 <script>
   console.log("hello---")
+  $(".sidenav-bar > div").each(function() {
+    var navItem = $(this);
+    if (navItem.find("a").attr("href") == location.pathname) {
+      navItem.addClass("active");
+    }
+});
+
 
   function openFileInput() {
     document.getElementById('FileUpload1').click();

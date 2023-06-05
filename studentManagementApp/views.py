@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import jwt
 from rest_framework_simplejwt.tokens import AccessToken
 from datetime import datetime
+from django.core.mail import *
 
 
 def TeachersDashBoard(request):
@@ -72,6 +73,35 @@ class StaffHodRegisterView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+from rest_framework.renderers import TemplateHTMLRenderer
+ 
+class Register(TemplateView):
+    template_name = 'register.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['serializer'] = UserRegistrationSerializer()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.POST)
+        if request.POST['password'] == request.POST['confirmpassword']:
+            user = User.objects.create(first_name= request.POST['first_name'],last_name=request.POST['last_name'],email=request.POST['email'],role="HOD")
+            password = request.POST['password']
+            user.set_password(password)
+            user.save()
+            subject = 'Loging Id Password'
+            message = f'''
+                Hello  {user.first_name}, your User Id and Password Are Below:
+                User Name : {user.email}
+                Password : {password} '''
+            email_from = settings.EMAIL_HOST_USER
+            recipient_list = [user.email ,]
+            send_mail( subject, message, settings.EMAIL_HOST_USER, recipient_list )
+            return redirect('login')
+        else:
+            return render(request,'register.html')
+
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
 
@@ -87,20 +117,6 @@ def decode_token(token):
 def logoutview(request):
     logout(request)
     return redirect("login")
-
-# class TokenLogin(APIView):
-#     def post(self,request,format = None):
-#         email = request.data.get('email') 
-#         password = request.data.get('password')
-#         # user = User.objects.get(email=email)
-#         user = authenticate(request, email=email, password=password)
-#         if user:
-#             auth_token = get_tokens_for_user(user)
-#             print("-----------------auth data",auth_token)
-#             response = Response({"success":True ,'refreshtoken': str(auth_token['refresh']), 'accesstoken': str(auth_token['access'])})
-#             response.set_cookie("user",user, max_age = 60)
-#             return response
-#         return Response({"msg":"Invalid Login credentials"})
        
 class LoginView(TemplateView):
     template_name = 'login.html'
@@ -115,19 +131,22 @@ class LoginView(TemplateView):
                 accesstoken = str(auth_token['access'])
                 request.session['accessToken'] = accesstoken
                 # request.session.set_expiry(settings.SESSION_COOKIE_AGE)
-                return render(request,'hodProfile.html',{"user":user})
+                return redirect('hodprofile')
+                # return render(request,'hodProfile.html',{"user":user})
             elif user.role == "Student":
                 login(request, user)
                 auth_token = get_tokens_for_user(user)
                 accesstoken = str(auth_token['access'])
                 request.session['accessToken'] = accesstoken
-                return render(request,'studentProfile.html',{"user":user})
+                return redirect('studentprofile')
+                # return render(request,'studentProfile.html',{"user":user})
             else:
                 auth_token = get_tokens_for_user(user)
                 accesstoken = str(auth_token['access'])
                 request.session['accessToken'] = accesstoken
                 login(request, user)
-                return render(request,'staffProfile.html',{"user":user})
+                return redirect('staffprofile')
+                # return render(request,'staffProfile.html',{"user":user})
                 
         else:
             return render(request,'login.html',{'alert': 'Invalid login credentials'})
@@ -162,26 +181,34 @@ class CourseView(APIView):
         user_id = d_token['user_id']
         hod = User.objects.get(id=user_id).role == "HOD"
         if hod is True:
-            serializer = CourseSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({'msg' : 'Data Created'})
-            return Response(serializer.errors)
+            course = Courses.objects.create(courseName = request.data['courseName'])
+            session = SessionYear.objects.create(startYear = request.data['startYear'],endYear = request.data['endYear'])
+            course.sessionYear = session
+            course.save()
+            return Response({'data':course.courseName})
         else:
             return Response({"msg":"permission denied"})
     
     def patch(self,request,pk = None,format = None):
         d_token = decode_token(request.session['accessToken'])
         user_id = d_token['user_id']
-        hod = User.objects.get(id=user_id).role == "HOD"    
+        hod = User.objects.get(id=user_id).role == "HOD" 
+        data = []   
         if hod is True:
-            subject = Courses.objects.get(pk=pk)   
-            serializer = NewCourseSerializer(subject, data=request.data, partial = True)
-            if serializer.is_valid():
-                updated_course = serializer.save()
-                NewCourseSerializer(updated_course).data
-                return Response({'msg' : serializer.data})
-            return Response(serializer.errors)
+            course = Courses.objects.get(pk=pk)  
+            course.courseName = request.data['courseName'] 
+            session = SessionYear.objects.create(startYear= request.data['startyear'],endYear = request.data['endyear'])
+            course.sessionYear = session
+            course.save()
+            data.append({
+                "course": course.courseName
+            })
+            # serializer = NewCourseSerializer(subject, data=request.data, partial = True)
+            # if serializer.is_valid():
+            #     updated_course = serializer.save()
+            #     NewCourseSerializer(updated_course).data
+            return Response(data)
+            # return Response(serializer.errors)
         else:
             return Response({"msg":"permission denied"})
 
@@ -287,7 +314,15 @@ class SubjectView(APIView):
                         return Response(serializer.data)
                     stu = Subjects.objects.all().order_by('pk')
                     serializer = AddSubjectSerializer(stu,many = True)
-                    return Response(serializer.data)
+                    teacher = Teachers.objects.all()
+                    course = Courses.objects.all()
+                    data = {
+                            'user':loggedIn_user,
+                            'data':serializer.data,
+                            'teacher': teacher,
+                            'course':course
+                            }
+                    return Response(data)
                 else:
                     return Response({"msg":"permission denied"})
             except Exception:
@@ -373,7 +408,6 @@ class TeachersView(APIView):
                 return Response({'msg': e },status=status.HTTP_401_UNAUTHORIZED) 
     
     def post(self,request,format = None):
-        print("post ----here")
         d_token = decode_token(request.session['accessToken'])
         user_id = d_token['user_id']
         if User.objects.get(id = user_id).role == "HOD":
@@ -384,6 +418,14 @@ class TeachersView(APIView):
                 user.set_password(password)
                 user.role = "Teacher"
                 user.save()
+                subject = 'Loging Id Password'
+                message = f'''
+                    Hello  {user.first_name}, your User Id and Password Are Below:
+                    User Name : {user.email}
+                    Password : {password} '''
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [user.email ,]
+                send_mail( subject, message, settings.EMAIL_HOST_USER, recipient_list )
                 Teachers.objects.create(user = user)
                 return Response({'msg' : serializer.data})
             return Response(serializer.errors)
@@ -410,6 +452,9 @@ class TeachersView(APIView):
         user = User.objects.get(id = user_id)
         if User.objects.get(id = user_id).role == "HOD" or (Teachers.objects.filter(user=user).filter(pk=pk).exists()):
             sub = Teachers.objects.get(pk=pk)
+            user  =  sub.user.id
+            user1 = User.objects.get(id= user)
+            user1.delete()
             sub.delete()
             return Response({'msg': 'DATA Deleted'})
         return Response({'msg': 'Permission Denied'})
@@ -444,23 +489,23 @@ class StudentView(APIView):
 
                     }
                     return Response(teacher)
-                student = Students.objects.all().order_by('pk')
-                student_info = []
-                student_info1 = []
-                for i in student:
-                    student_info.append({
-                        'user':loggedIn_user,
-                        'courses':courses,
-                        'sessions':sessions,
-                        'id': i.id,
-                        'user_id':i.user.id,
-                        'email': i.user.email,
-                        'first_name': i.user.first_name,
-                        'last_name': i.user.last_name,
-                        'course': i.course.courseName,
-                        'sessionYear': i.sessionYear
-                    })
-                return Response(student_info)
+                else:
+                    student = Students.objects.all().order_by('pk')
+                    student_info = []
+                    for i in student:
+                        student_info.append({
+                            'user':loggedIn_user,
+                            'courses':courses,
+                            'sessions':sessions,
+                            'id': i.id,
+                            'user_id':i.user.id,
+                            'email': i.user.email,
+                            'first_name': i.user.first_name,
+                            'last_name': i.user.last_name,
+                            'course': i.course.courseName,
+                            'sessionYear': i.sessionYear
+                        })
+                    return Response(student_info)
             except Exception as e:
                 return Response({'msg': 'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED) 
     
@@ -468,11 +513,32 @@ class StudentView(APIView):
         d_token = decode_token(request.session['accessToken'])
         user_id = d_token['user_id']
         if (User.objects.get(id = user_id).role == "HOD"):
-            serializer = StudentSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({'Student' : serializer.data})
-            return Response(serializer.errors)
+            user = User.objects.create(email= request.data['email'],first_name = request.data['first_name'],last_name=request.data['last_name'],role="Student")
+            password = request.data['password']
+            user.set_password(request.data['password'])
+            user.save()
+            student = Students.objects.get(user=user)
+            coursedata = Courses.objects.get(id=request.data['course'])
+            session = SessionYear.objects.get(id=request.data['sessionYear'])
+            student.course = coursedata
+            student.sessionYear = session
+            student.save()
+            subject = 'Loging Id Password'
+            message = f'''
+                Hello  {user.first_name}, your User Id and Password Are Below:
+                User Name : {user.email}
+                Password : {password} '''
+            email_from = settings.EMAIL_HOST_USER
+            recipient_list = [user.email ,]
+            send_mail( subject, message, settings.EMAIL_HOST_USER, recipient_list )
+            data = {
+                    'id': user.id,
+                    'user_id':user.user.id,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                }
+            return Response(data)
         return Response({'msg': 'Permission Denied'})
     
     def patch(self,request,pk = None,format = None):
@@ -483,6 +549,10 @@ class StudentView(APIView):
             teacher = Students.objects.get(pk=pk)   
             id = teacher.user
             serializer = TeacherSerializer(id, data=request.data)
+            user = Students.objects.get(pk=request.data['pk'])
+            user.course = Courses.objects.get(id= request.data['course'])
+            user.sessionYear = SessionYear.objects.get(id= request.data['sessionYear'])
+            user.save()
             if serializer.is_valid():
                 serializer.save()
                 return Response({'msg' : serializer.data})
@@ -494,7 +564,11 @@ class StudentView(APIView):
         user_id = d_token['user_id']
         if User.objects.get(id = user_id).role == "HOD" :
             student = Students.objects.get(id=pk)
+            user  =  student.user.id
+            user1 = User.objects.get(id= user)
+            user1.delete()
             student.delete()
+        
             return Response({'msg': 'DATA Deleted'})
         return Response({'msg': 'Permission Denied'})
     
@@ -631,12 +705,12 @@ class StudentLeaveView(APIView):
                 user_id = d_token['user_id']
                 loggedIn_user = User.objects.get(id = user_id)
                 if pk is not None:
-                    if User.objects.get(id = user_id).role == "HOD":
+                    if User.objects.get(id = user_id).role == "Teacher":
                         leave = StudentLeave.objects.get(id=pk)
                         leave={
                                 'user':loggedIn_user,
                                 'id': leave.id,
-                                'email': leave.student.user.first_name,
+                                'Student': leave.student.user.first_name,
                                 'leave_date': leave.leaveDate,
                                 'leave_msg': leave.reason,
                                 'applied on': leave.created_at,
@@ -653,7 +727,7 @@ class StudentLeaveView(APIView):
                                 student_info.append({
                                     'user':loggedIn_user,
                                     'id': i.id,
-                                    'email': i.student.user.first_name,
+                                    'Student': i.student.user.first_name,
                                     'leave_date': i.leaveDate,
                                     'leave_msg': i.reason,
                                     'applied on': i.created_at,
@@ -663,14 +737,14 @@ class StudentLeaveView(APIView):
                         return Response({'msg': 'Permission Denied'})
                     else:
                         return Response({'msg' : "Not a Hod "})
-                if User.objects.get(id = user_id).role == "HOD":
+                if User.objects.get(id = user_id).role == "Teacher":
                     student = StudentLeave.objects.all()
                     student_info = []
                     for i in student:
                         student_info.append({
                             'user':loggedIn_user,
                             'id': i.id,
-                            'email': i.student.user.first_name,
+                            'Student': i.student.user.first_name,
                             'leave_date': i.leaveDate,
                             'leave_msg': i.reason,
                             'applied on': i.created_at,
@@ -686,7 +760,7 @@ class StudentLeaveView(APIView):
                             student_info.append({
                                 'user':loggedIn_user,
                                 'id': i.id,
-                                'email': i.student.user.first_name,
+                                'Student': i.student.user.first_name,
                                 'leave_date': i.leaveDate,
                                 'leave_msg': i.reason,
                                 'applied on': i.created_at,
@@ -849,6 +923,22 @@ class StaffLeaveListView(TemplateView):
             }
             return context
         
+class StudentsLeaveRequestsListView(TemplateView):
+    template_name = 'managestudentsLeaveRequest.html'
+
+    def get_context_data(self, **kwargs):
+        response = StudentLeaveView.as_view()(self.request)
+        if response.status_code == status.HTTP_200_OK:
+            context = {
+                'users':response.data
+            }
+            return context
+        elif response.status_code == status.HTTP_401_UNAUTHORIZED:
+            context = {
+                'flag':2
+            }
+            return context
+        
 # Staff side       
 class StaffApplyLeaveView(TemplateView):
     template_name = 'staffapplyleave.html'
@@ -872,7 +962,6 @@ class StudentApplyLeaveView(TemplateView):
 
     def get_context_data(self, **kwargs):
         response = StudentLeaveView.as_view()(self.request)
-        print(response.data,"ppppp")
         if response.status_code == status.HTTP_200_OK:
             context = {
                 'users':response.data
@@ -916,6 +1005,7 @@ class StudentProfileView(TemplateView):
                 'flag':2
             }
             return context  
+        return super().get_context_data(**kwargs)
 
 class StaffProfileView(TemplateView):
     template_name = 'staffProfile.html'
@@ -932,6 +1022,7 @@ class StaffProfileView(TemplateView):
                 'flag':2
             }
             return context  
+        return super().get_context_data(**kwargs)
         
 class HodProfileView(TemplateView):
     template_name = 'hodProfile.html'
@@ -948,7 +1039,7 @@ class HodProfileView(TemplateView):
                 'flag':2
             }
             return context  
-    
+        return super().get_context_data(**kwargs)
     
 class MyProfileView(APIView):
     def get(self,request):
@@ -977,7 +1068,6 @@ class MyProfileView(APIView):
                 d_token = decode_token(request.session['accessToken'])
                 user_id = d_token['user_id']
                 if request.FILES['uploaded_file']:
-                    print("profile image ===",request.FILES['uploaded_file'])
                     user = User.objects.get(id = user_id)
                     user.profile_img = request.FILES['uploaded_file']
                     user.save()
@@ -989,19 +1079,26 @@ class MyProfileView(APIView):
                         "profile_img":user.profile_img  
                     }
                     return Response(data)
-                else:
-                    user = User.objects.get(id = user_id)
-                    user.first_name = request.data['fnm']
-                    user.last_name = request.data['lnm']
-                    user.email = request.data['email']
-                    user.save()
-                    data = {
-                        "user_id":user.pk,
-                        "fnm":user.first_name,
-                        "lnm":user.last_name,
-                        "email":user.email  
-                    }
-                    return Response(data)
+            except Exception:
+                return Response({'msg': 'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+    def patch(self,request):
+        if request.session.has_key('accessToken'):
+            try:
+                AccessToken(request.session['accessToken'])
+                d_token = decode_token(request.session['accessToken'])
+                user_id = d_token['user_id']  
+                user = User.objects.get(id = user_id)
+                user.first_name = request.data['fnm']
+                user.last_name = request.data['lnm']
+                user.email = request.data['email']
+                user.save()
+                data = {
+                    "user_id":user.pk,
+                    "fnm":user.first_name,
+                    "lnm":user.last_name,
+                    "email":user.email  
+                }
+                return Response(data)
             except Exception:
                 return Response({'msg': 'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
         

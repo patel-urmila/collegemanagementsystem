@@ -1,8 +1,14 @@
 {% extends "HodDashBoard.html" %}
 {% block content %}
-<h1>Manage Session</h1>
-<button data-session-id="{{i.id}}"class="add-button btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="span_session_nm">Add New Session</button>
-<table class="table">
+<div class="jumbotron jumbotron-fluid text-bg-primary p-3">
+  <div class="container m-3">
+      <h2>Manage Session</h2>
+  </div>
+</div>
+<div class="m-5">
+  <button data-session-id="{{i.id}}"class="add-button btn btn-primary mb-4" data-toggle="modal" data-target="#exampleModal" id="span_session_nm">Add New Session
+  </button>
+  <table class="table">
     <thead class="thead-dark">
       <tr>
         <th scope="col">Session ID</th>
@@ -29,6 +35,7 @@
         {% endfor %}
     </tbody>
   </table>
+</div>
   <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -106,10 +113,12 @@
             },
             success: function(){
                 console.log("--------success")
+                alert("Record Updated successfully !!")
                 document.location = "/managesession/"
             },
             error: function () {
                 console.log("error ---------")
+                alert("Invalid Data !!")
                 document.location = "/managesession/"
                }
       });
@@ -126,9 +135,11 @@
                 'pk':e,
             },
             success: function(){
+                alert("Record Deleted !!")
                 document.location = "/managesession/"
             },
             error: function () {
+                alert("Failed !!")
                 document.location = "/managesession/"
                }
       });
@@ -149,10 +160,12 @@
             },
             success: function(){
                 console.log("-------success")
+                alert("Record Created successfully !!")
                 document.location = "/managesession/"
             },
             error: function () {
                 console.log("error------")
+                alert("Invalid Data !!")
                 document.location = "/managesession/"
                }
       });

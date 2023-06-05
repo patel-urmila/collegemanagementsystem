@@ -27,46 +27,6 @@
         </form>
     </div>
 </div>
-<div class="jumbotron jumbotron-fluid text-bg-warning m-3 p-3">
-    <div class="container m-3">
-        <h3>Requested Leaves</h3>
-        <div>
-        </div>
-    </div>
-</div>
-<div class="m-4">
-    <table class="table">
-        <thead class="thead-dark">
-          <tr>
-            <th scope="col">Id</th>
-            <th scope="col">From Date</th>
-            <th scope="col">To Date</th>
-            <th scope="col">Note</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-            {% if not users.msg %}
-                {% for i in users %}
-                    {% if i.status == "Requested" %}
-                        <tr>
-                          <th scope="row">{{forloop.counter}}</th>
-                          <td>{{i.leave_date}}</td>
-                          <td>{{i.leave_date}}</td>
-                          <td>{{i.leave_msg}}</td>
-                          <td>{{i.status}}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-            {% elif users.msg %}
-                <tr>
-                    <td colspan="6" class="text-center">No Data Found</td>
-                </tr>
-            {% endif %}
-        </tbody>
-      </table>
-</div>
-
 <div class="jumbotron jumbotron-fluid text-bg-danger m-3 p-3">
     <div class="container m-3">
         <h3>History</h3>
@@ -88,7 +48,6 @@
         <tbody>
             {% if not users.msg %}
                 {% for i in users %}
-                    {% if i.status == "Reject" or i.status == "Approve" %}
                         <tr>
                           <th scope="row">{{forloop.counter}}</th>
                           <td>{{i.leave_date}}</td>
@@ -96,7 +55,6 @@
                           <td>{{i.leave_msg}}</td>
                           <td>{{i.status}}</td>
                         </tr>
-                    {% endif %}
                 {% endfor %}
             {% else %}
                 <tr>

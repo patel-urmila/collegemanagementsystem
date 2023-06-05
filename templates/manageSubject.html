@@ -1,32 +1,49 @@
 {% extends "HodDashBoard.html" %}
 {% block content %}
-<h1>Manage Subject</h1>
-<button data-subject-id="{{i.id}}"class="add-button btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="span_course_name">Add Subject</button> 
+<div class="jumbotron jumbotron-fluid text-bg-primary p-3">
+  <div class="container m-3">
+      <h2>Manage Subject</h2>
+  </div>
+</div>
+<div class="m-5">
+    <button data-subject-id="{{i.id}}"class="add-button btn btn-primary mb-4" data-toggle="modal" data-target="#exampleModal" id="span_course_name">Add Subject</button> 
     <table class="table">
         <thead class="thead-dark">
           <tr>
             <th scope="col">Subject ID</th>
             <th scope="col">Subject Name</th>
-            <th></th>
-            <th></th>
+            <th scope="col">Teacher</th>
+            <th scope="col"></th>
           </tr> 
         </thead>
         <tbody>
-            {% for i in subject %}
-                <tr>
-                    <th scope="row">{{i.id}}</th>
-                    <td><span id="spanSubNm{{i.id}}">{{i.subName}} </span><input id="SubNminput{{i.id}}" value="{{i.subName}}" hidden/></td>
-                    <td>                
-                        <button class="btn btn-warning" id='upadteSubdata{{i.id}}' onclick='updatesubject({{i.id}})' >Edit</button>
-                        <button class="btn btn-primary" id='saveSubdata{{i.id}}' onclick='savesubjectdata({{i.id}})'hidden>Save</button>
-                    </td>  
-                    <td>
-                        <button id="{{i.id}}" class="btn btn-danger" onclick='deletesubjectdata({{i.id}})'>Delete</button>
-                    </td> 
-                </tr>
-            {% endfor %}
+          {% for i in subject.data %}
+              <tr>
+                  <th>{{i.id}}</th>
+                  <td><span id="spanSubNm{{i.id}}">{{i.subName}} </span><input id="SubNminput{{i.id}}" value="{{i.subName}}" hidden/></td>
+                  <td>
+                    <select select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="teacherselectdrop-{{i.id}}" name="teacherselectdrop" required disabled>
+                        {% for j in subject.teacher%}
+                          {% if i.teacher == j.pk %}
+                            <option value="{{j.pk}}" selected>{{j}}</option>
+                          {% else %}
+                            <option value="{{j.pk}}">{{j}}</option>
+                          {% endif %}
+                        {%endfor%}
+                    </select>
+                  </td>
+                  <td>                
+                      <button class="btn btn-warning" id='upadteSubdata{{i.id}}' onclick='updatesubject({{i.id}})' >Edit</button>
+                      <button class="btn btn-primary" id='saveSubdata{{i.id}}' onclick='savesubjectdata({{i.id}})'hidden>Save</button>
+                  </td>  
+                  <td>
+                      <button id="{{i.id}}" class="btn btn-danger" onclick='deletesubjectdata({{i.id}})'>Delete</button>
+                  </td> 
+              </tr>
+          {% endfor %}
         </tbody>
     </table>
+</div>
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
           <div class="modal-content">
@@ -41,11 +58,19 @@
                 </div>
                 <div class="form-group">
                   <label for="recipient-name" class="col-form-label">Course</label>
-                  <input type="text" class="form-control" id="floatingInputCourseNm" placeholder="Enter Session Year" name="Coursenm">
+                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="courseselect" name="courseselect" required>
+                    {%for j in subject.course %}
+                        <option class="p-4 mb-3" value="{{j.pk}}" selected>{{j}}</option>
+                    {%endfor%}
+                  </select>
                 </div>
                 <div class="form-group">
                   <label for="recipient-name" class="col-form-label">Teacher</label>
-                  <input type="text" class="form-control" id="floatingInputTeacherNm" placeholder="Enter Session Year" name="teacherNm">
+                  <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg  example" id="teacherselect" name="teacherselect" required>
+                    {%for j in subject.teacher %}
+                        <option class="p-4 mb-3" value="{{j.pk}}" selected>{{j}}</option>
+                    {%endfor%}
+                  </select>
                 </div>
               </form>
             </div>
@@ -70,11 +95,14 @@
             document.getElementById("spanSubNm"+e).hidden = true
             document.getElementById("saveSubdata"+e).removeAttribute("hidden");
             document.getElementById("SubNminput"+e).removeAttribute("hidden");
+            $('select').removeAttr('disabled');
         }
     
         function savesubjectdata(e){
             console.log("here---")
             Subject = document.getElementById("SubNminput"+e).value;
+            Course = document.getElementById("SubNminput"+e).value;
+            Teacher = document.getElementById("teacherselectdrop-"+e).value;
             $.ajax({
                 method: "patch",
                 url: "/subject/"+e,
@@ -84,13 +112,16 @@
                 data:{
                     'pk':e,
                     'subName': Subject,
+                    'teacher': Teacher,
                 },
                 success: function(){
                     console.log("--------success")
+                    alert("Record Updated successfully !!")
                     document.location = "/managesubject/"
                 },
                 error: function () {
                     console.log("error ---------")
+                    alert("Invalid Data !!")
                     document.location = "/managesubject/"
                    }
           });
@@ -107,9 +138,11 @@
                     'pk':e,
                 },
                 success: function(){
+                    alert("Record Deleted successfully !!")
                     document.location = "/managesubject/"
                 },
                 error: function () {
+                    alert("Deletion Failed !!")
                     document.location = "/managesubject/"
                    }
           });
@@ -117,8 +150,8 @@
     
         function postsubjectdata(){
             SubNm = document.getElementById("floatingInputSubjectNm").value;
-            Course = document.getElementById("floatingInputCourseNm").value;
-            Teacher = document.getElementById("floatingInputTeacherNm").value;
+            Course = document.getElementById("courseselect").value;
+            Teacher = document.getElementById("teacherselect").value;
             $.ajax({
                 method: "post",
                 url: "/subject/",
@@ -132,10 +165,12 @@
                 },
                 success: function(){
                     console.log("-------success")
+                    alert("Record Created !!")
                     document.location = "/managesubject/"
                 },
                 error: function () {
                     console.log("error------")
+                    alert("Invalid Data !!")
                     document.location = "/managesubject/"
                    }
           });

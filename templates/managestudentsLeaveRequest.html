@@ -1,8 +1,8 @@
-{% extends "HodDashBoard.html" %}
+{% extends "teacherDashBoard.html" %}
 {% block content %}
 <div class="jumbotron jumbotron-fluid text-bg-primary p-3">
   <div class="container m-3">
-      <h2>Staff Leave Requests</h2>
+      <h2>Students Leave Requests</h2>
   </div>
 </div>
 <div class="m-5">
@@ -21,7 +21,7 @@
         {% for i in users %}
             <tr>
                 <th scope="row">{{forloop.counter}}</th>
-                <td>{{i.Teacher}}</td>
+                <td>{{i.Student}}</td>
                 <td>{{i.leave_msg}}</td>
                 <td>{{i.leave_date}}</td>
                 <td><button type="button" class="btn btn-primary" onclick='AcceptRequest({{i.id}})'>Accept</button></td>
